@@ -87,12 +87,34 @@ body:
     validations:
       required: false
 
+  - type: markdown
+    attributes:
+      value: |
+        **Como calcular o LOC abaixo:**
+        ```bash
+        # Linhas dos commits marcados como "gerado" ou "assistido"
+        git log --grep="AI-Extent: gerado" --grep="AI-Extent: assistido" --format="%H" | xargs -I{} git show --numstat --format="" {}
+
+        # Linhas dos commits marcados como "manual"
+        git log --grep="AI-Extent: manual" --format="%H" | xargs -I{} git show --numstat --format="" {}
+        ```
+        Some a coluna de linhas adicionadas de cada grupo e preencha os dois campos abaixo.
+
   - type: input
     id: loc-ia
     attributes:
-      label: LOC gerado por IA / LOC manual
-      description: Calculado via git log/diff cruzando com o trailer AI-Extent dos commits.
-      placeholder: "Ex: 120 / 40"
+      label: LOC gerado/assistido por IA
+      description: Soma das linhas adicionadas nos commits marcados "gerado" ou "assistido".
+      placeholder: "Ex: 28"
+    validations:
+      required: false
+
+  - type: input
+    id: loc-manual
+    attributes:
+      label: LOC manual
+      description: Soma das linhas adicionadas/alteradas nos commits marcados "manual".
+      placeholder: "Ex: 2"
     validations:
       required: false
 
