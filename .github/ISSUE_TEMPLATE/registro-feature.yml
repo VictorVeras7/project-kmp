@@ -1,0 +1,141 @@
+name: "Registro de Feature (KMP/Flutter + uso de IA)"
+description: "Abra esta issue ANTES de iniciar uma feature. Preencha os campos objetivos na abertura e volte para fechar com os campos finais e subjetivos quando terminar."
+title: "[Feature] "
+labels: ["registro-metrica"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Como usar
+        1. Abra esta issue **antes** de começar a feature, preenchendo os campos da seção "Ao iniciar".
+        2. Durante o desenvolvimento, marque cada commit relacionado com o trailer padronizado (`AI-Tool`, `AI-Extent`) e incremente o contador de prompts num comentário desta issue.
+        3. Ao terminar, edite esta issue preenchendo a seção "Ao finalizar" e feche-a. Fechar = registro completo.
+
+  - type: dropdown
+    id: framework
+    attributes:
+      label: Framework
+      description: Em qual framework esta feature foi implementada?
+      options:
+        - Kotlin Multiplatform (KMP)
+        - Flutter
+    validations:
+      required: true
+
+  - type: input
+    id: feature-nome
+    attributes:
+      label: Nome da feature
+      description: Nome curto e descritivo (ex. "Login com autenticação")
+      placeholder: "Ex: Tela de listagem de pedidos"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: ai-tool
+    attributes:
+      label: Ferramenta de IA utilizada
+      description: Qual foi a principal ferramenta de IA usada nesta feature?
+      options:
+        - Nenhuma (implementação manual)
+        - Claude
+        - GitHub Copilot
+        - ChatGPT
+        - Gemini
+        - Outra (especifique nos comentários)
+    validations:
+      required: true
+
+  - type: input
+    id: inicio
+    attributes:
+      label: Data/hora de início
+      description: Preencha ao abrir a issue, antes de começar a codar.
+      placeholder: "Ex: 28/09 14:32"
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        ## Ao finalizar (preencher ao fechar a issue)
+
+  - type: input
+    id: fim
+    attributes:
+      label: Data/hora de término
+      placeholder: "Ex: 28/09 17:50"
+    validations:
+      required: false
+
+  - type: input
+    id: tempo-total
+    attributes:
+      label: Tempo total gasto
+      description: Aproximado, incluindo pausas se relevante. Pode usar o total do WakaTime.
+      placeholder: "Ex: 3h20"
+    validations:
+      required: false
+
+  - type: input
+    id: num-prompts
+    attributes:
+      label: Número de prompts/interações com a IA
+      description: Contagem aproximada de pedidos de geração/alteração de código feitos à IA (não conte perguntas triviais).
+      placeholder: "Ex: 14"
+    validations:
+      required: false
+
+  - type: input
+    id: loc-ia
+    attributes:
+      label: LOC gerado por IA / LOC manual
+      description: Calculado via git log/diff cruzando com o trailer AI-Extent dos commits.
+      placeholder: "Ex: 120 / 40"
+    validations:
+      required: false
+
+  - type: dropdown
+    id: dificuldade
+    attributes:
+      label: Dificuldade percebida (1 = muito fácil, 5 = muito difícil)
+      options:
+        - "1"
+        - "2"
+        - "3"
+        - "4"
+        - "5"
+    validations:
+      required: false
+
+  - type: dropdown
+    id: confianca
+    attributes:
+      label: Confiança no código gerado pela IA (1 = nenhuma, 5 = total)
+      options:
+        - "1"
+        - "2"
+        - "3"
+        - "4"
+        - "5"
+        - "N/A (não usou IA)"
+    validations:
+      required: false
+
+  - type: textarea
+    id: retrabalho
+    attributes:
+      label: Precisou de retrabalho relevante?
+      description: Responda Sim/Não e, se sim, descreva brevemente o que precisou ser refeito manualmente.
+      placeholder: "Ex: Sim — refez a validação de token manualmente, a IA gerou uma versão insegura."
+    validations:
+      required: false
+
+  - type: textarea
+    id: observacoes
+    attributes:
+      label: Observações adicionais
+      description: Qualquer nota livre relevante sobre DX, bugs da IA, comparação com a outra plataforma, etc.
+    validations:
+      required: false
