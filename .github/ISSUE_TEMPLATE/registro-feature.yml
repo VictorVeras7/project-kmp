@@ -1,5 +1,5 @@
 name: "Registro de Feature (KMP/Flutter + uso de IA)"
-description: "Abra esta issue ANTES de iniciar uma feature. Preencha os campos objetivos na abertura e volte para fechar com os campos finais e subjetivos quando terminar."
+description: "Abra esta issue ANTES de iniciar uma feature. Preencha os campos de abertura e volte para fechar com os campos finais quando terminar."
 title: "[Feature] "
 labels: ["registro-metrica"]
 body:
@@ -7,15 +7,18 @@ body:
     attributes:
       value: |
         ## Como usar
-        1. Abra esta issue **antes** de começar a feature, preenchendo os campos da seção "Ao iniciar".
-        2. Durante o desenvolvimento, marque cada commit relacionado com o trailer padronizado (`AI-Tool`, `AI-Extent`) e incremente o contador de prompts num comentário desta issue.
-        3. Ao terminar, edite esta issue preenchendo a seção "Ao finalizar" e feche-a. Fechar = registro completo.
+        1. Abra esta issue **antes** de começar a feature, preenchendo a seção "Ao iniciar".
+        2. Durante o desenvolvimento:
+           - Commite a saída da IA **sem editar**, com o trailer `AI-Extent: gerado`.
+           - Faça as suas edições em **commits separados**, com `AI-Extent: manual`.
+           - Use `AI-Extent: assistido` só quando a IA deu uma sugestão pontual que você reescreveu.
+           - Incremente o contador de prompts num comentário desta issue.
+        3. Ao terminar, edite esta issue preenchendo "Ao finalizar" e feche-a.
 
   - type: dropdown
     id: framework
     attributes:
       label: Framework
-      description: Em qual framework esta feature foi implementada?
       options:
         - Kotlin Multiplatform (KMP)
         - Flutter
@@ -26,7 +29,6 @@ body:
     id: feature-nome
     attributes:
       label: Nome da feature
-      description: Nome curto e descritivo (ex. "Login com autenticação")
       placeholder: "Ex: Tela de listagem de pedidos"
     validations:
       required: true
@@ -35,7 +37,6 @@ body:
     id: ai-tool
     attributes:
       label: Ferramenta de IA utilizada
-      description: Qual foi a principal ferramenta de IA usada nesta feature?
       options:
         - Nenhuma (implementação manual)
         - Claude
@@ -47,11 +48,19 @@ body:
       required: true
 
   - type: input
+    id: ai-modelo
+    attributes:
+      label: Modelo e versão da IA
+      description: Preencha conforme o que aparece na ferramenta no momento do uso.
+      placeholder: "Ex: Claude Sonnet 5.5"
+    validations:
+      required: false
+
+  - type: input
     id: inicio
     attributes:
       label: Data/hora de início
-      description: Preencha ao abrir a issue, antes de começar a codar.
-      placeholder: "Ex: 28/09 14:32"
+      placeholder: "Ex: 19/10 15:40"
     validations:
       required: true
 
@@ -65,7 +74,7 @@ body:
     id: fim
     attributes:
       label: Data/hora de término
-      placeholder: "Ex: 28/09 17:50"
+      placeholder: "Ex: 19/10 18:50"
     validations:
       required: false
 
@@ -73,7 +82,7 @@ body:
     id: tempo-total
     attributes:
       label: Tempo total gasto
-      description: Aproximado, incluindo pausas se relevante. Pode usar o total do WakaTime.
+      description: Aproximado, pode usar o total do WakaTime. É analisado por nível de uso de IA, comparando features com mais e menos IA.
       placeholder: "Ex: 3h20"
     validations:
       required: false
@@ -81,39 +90,44 @@ body:
   - type: input
     id: num-prompts
     attributes:
-      label: Número de prompts/interações com a IA
-      description: Contagem aproximada de pedidos de geração/alteração de código feitos à IA (não conte perguntas triviais).
+      label: Número de prompts (esforço de interação com a IA)
+      description: Pedidos de geração ou alteração de código feitos à IA. Não conte perguntas triviais.
       placeholder: "Ex: 14"
     validations:
       required: false
 
-  - type: markdown
-    attributes:
-      value: |
-        **Como calcular o LOC abaixo:**
-        ```bash
-        # Linhas dos commits marcados como "gerado" ou "assistido"
-        git log --grep="AI-Extent: gerado" --grep="AI-Extent: assistido" --format="%H" | xargs -I{} git show --numstat --format="" {}
-
-        # Linhas dos commits marcados como "manual"
-        git log --grep="AI-Extent: manual" --format="%H" | xargs -I{} git show --numstat --format="" {}
-        ```
-        Some a coluna de linhas adicionadas de cada grupo e preencha os dois campos abaixo.
-
   - type: input
     id: loc-ia
     attributes:
-      label: LOC gerado/assistido por IA
-      description: Soma das linhas adicionadas nos commits marcados "gerado" ou "assistido".
-      placeholder: "Ex: 28"
+      label: LOC gerado por IA / LOC manual
+      description: Calculado pelos commits separados (gerado vs manual) via git diff.
+      placeholder: "Ex: 120 / 40"
     validations:
       required: false
 
   - type: input
-    id: loc-manual
+    id: loc-sobrevivente
     attributes:
-      label: LOC manual
-      description: Soma das linhas adicionadas/alteradas nos commits marcados "manual".
+      label: Linhas geradas por IA que sobreviveram até o fim da feature
+      description: Via git blame sobre as linhas do commit "gerado".
+      placeholder: "Ex: 85 de 120"
+    validations:
+      required: false
+
+  - type: input
+    id: compartilhamento
+    attributes:
+      label: Linhas compartilhadas / total
+      description: KMP, linhas em commonMain sobre o total. Flutter, linhas em lib/ sobre o total. Exclua testes e código gerado.
+      placeholder: "Ex: 160 / 210"
+    validations:
+      required: false
+
+  - type: input
+    id: pontos-plataforma
+    attributes:
+      label: Pontos de plataforma (expect/actual no KMP, Platform Channels no Flutter)
+      description: Quantas vezes foi preciso escrever código específico de plataforma nesta feature.
       placeholder: "Ex: 2"
     validations:
       required: false
@@ -121,7 +135,7 @@ body:
   - type: dropdown
     id: dificuldade
     attributes:
-      label: Dificuldade percebida (1 = muito fácil, 5 = muito difícil)
+      label: Dificuldade percebida da tarefa, registrada junto do uso de IA (1 = muito fácil, 5 = muito difícil)
       options:
         - "1"
         - "2"
@@ -149,8 +163,7 @@ body:
     id: retrabalho
     attributes:
       label: Precisou de retrabalho relevante?
-      description: Responda Sim/Não e, se sim, descreva brevemente o que precisou ser refeito manualmente.
-      placeholder: "Ex: Sim — refez a validação de token manualmente, a IA gerou uma versão insegura."
+      description: Sim ou não e, se sim, o que precisou ser refeito manualmente e por quê.
     validations:
       required: false
 
@@ -158,6 +171,6 @@ body:
     id: observacoes
     attributes:
       label: Observações adicionais
-      description: Qualquer nota livre relevante sobre DX, bugs da IA, comparação com a outra plataforma, etc.
+      description: Bloqueios longos, erros da IA, comparação com a outra plataforma, impressões de DX.
     validations:
       required: false
