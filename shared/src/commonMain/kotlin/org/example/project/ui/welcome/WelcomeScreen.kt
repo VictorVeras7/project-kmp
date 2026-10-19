@@ -1,5 +1,6 @@
 package org.example.project.ui.welcome
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -21,6 +22,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -85,6 +87,17 @@ fun WelcomeScreen(
                 ) {
                     Text("Entrar", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
+                OutlinedButton(
+                    onClick = onSignup,
+                    modifier = Modifier.fillMaxWidth().height(54.dp),
+                    shape = RoundedCornerShape(17.dp),
+                    border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.outline),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.onBackground,
+                    ),
+                ) {
+                    Text("Criar conta", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                }
                 Text(
                     text = "Ao continuar você aceita os Termos de uso e a Política de privacidade.",
                     modifier = Modifier.fillMaxWidth(),
@@ -132,5 +145,11 @@ private fun Hero() {
 @Preview
 @Composable
 private fun WelcomeScreenPreview() {
-    RangoTheme { WelcomeScreen(onLogin = {}, onSignup = {}) }
+    RangoTheme(darkTheme = false) { WelcomeScreen(onLogin = {}, onSignup = {}) }
+}
+
+@Preview
+@Composable
+private fun WelcomeScreenDarkPreview() {
+    RangoTheme(darkTheme = true) { WelcomeScreen(onLogin = {}, onSignup = {}) }
 }
