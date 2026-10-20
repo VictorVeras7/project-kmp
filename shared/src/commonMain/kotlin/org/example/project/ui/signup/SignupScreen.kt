@@ -1,5 +1,6 @@
 package org.example.project.ui.signup
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -24,15 +25,19 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.example.project.ui.components.AuthField
 import org.example.project.ui.components.BackButton
+import org.example.project.ui.components.RangoCheckbox
 
 private val EmailPattern = Regex("^[^@\\s]+@[^@\\s]+\\.[a-z]{2,}$", RegexOption.IGNORE_CASE)
 
@@ -50,7 +55,9 @@ fun SignupScreen(
     var phone by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
+    var acceptedTerms by remember { mutableStateOf(false) }
     var touched by remember { mutableStateOf(false) }
+    var termsError by remember { mutableStateOf(false) }
     var loading by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
@@ -69,7 +76,8 @@ fun SignupScreen(
     fun submit() {
         if (loading) return
         touched = true
-        if (validate().isNotEmpty()) return
+        termsError = !acceptedTerms
+        if (validate().isNotEmpty() || !acceptedTerms) return
 
         scope.launch {
             loading = true
@@ -152,7 +160,50 @@ fun SignupScreen(
                     visualTransformation = PasswordVisualTransformation(),
                     valid = touched && SignupField.ConfirmPassword !in errors && confirmPassword.isNotEmpty(),
                 )
+                TermsRow(
+                    checked = acceptedTerms,
+                    error = termsError && !acceptedTerms,
+                    onToggle = {
+                        acceptedTerms = !acceptedTerms
+                        termsError = false
+                    },
+                )
             }
+        }
+    }
+}
+
+@Composable
+private fun TermsRow(checked: Boolean, error: Boolean, onToggle: () -> Unit) {
+    val primary = MaterialTheme.colorScheme.primary
+    val highlight = SpanStyle(color = primary, fontWeight = FontWeight.Bold)
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(
+            modifier = Modifier.clickable(onClick = onToggle).padding(vertical = 2.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            RangoCheckbox(checked = checked)
+            Text(
+                text = buildAnnotatedString {
+                    append("Li e aceito os ")
+                    withStyle(highlight) { append("Termos de uso") }
+                    append(" e a ")
+                    withStyle(highlight) { append("Política de privacidade") }
+                    append(".")
+                },
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 12.sp,
+                lineHeight = 17.sp,
+                fontWeight = FontWeight.Medium,
+            )
+        }
+        if (error) {
+            Text(
+                text = "Aceite os termos para continuar.",
+                color = MaterialTheme.colorScheme.error,
+                fontSize = 11.5.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
         }
     }
 }
