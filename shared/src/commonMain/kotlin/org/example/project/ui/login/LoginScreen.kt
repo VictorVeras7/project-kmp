@@ -33,6 +33,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,7 +46,10 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
+private const val DemoPassword = "rango123"
 private val EmailPattern = Regex("^[^@\\s]+@[^@\\s]+\\.[a-z]{2,}$", RegexOption.IGNORE_CASE)
 
 private enum class LoginStatus { Idle, Loading, Success }
@@ -65,8 +69,10 @@ fun LoginScreen(
     var emailError by remember { mutableStateOf("") }
     var passwordError by remember { mutableStateOf("") }
     var status by remember { mutableStateOf(LoginStatus.Idle) }
+    val scope = rememberCoroutineScope()
 
     fun submit() {
+        if (status != LoginStatus.Idle) return
         emailError = when {
             email.isBlank() -> "Informe seu e-mail."
             !EmailPattern.matches(email) -> "E-mail inválido."
@@ -75,7 +81,20 @@ fun LoginScreen(
         passwordError = if (password.isEmpty()) "Informe sua senha." else ""
         if (emailError.isNotEmpty() || passwordError.isNotEmpty()) return
 
-        onLoginSuccess(keepConnected)
+        scope.launch {
+            status = LoginStatus.Loading
+            delay(1000)
+            if (password != DemoPassword) {
+                status = LoginStatus.Idle
+                passwordError = "Senha incorreta. Tente novamente."
+                return@launch
+            }
+            status = LoginStatus.Success
+            delay(700)
+            onLoginSuccess(keepConnected)
+            password = ""
+            status = LoginStatus.Idle
+        }
     }
 
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
