@@ -26,6 +26,8 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -48,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.example.project.ui.theme.RangoColors
 
 private const val DemoPassword = "rango123"
 private val EmailPattern = Regex("^[^@\\s]+@[^@\\s]+\\.[a-z]{2,}$", RegexOption.IGNORE_CASE)
@@ -165,9 +168,7 @@ fun LoginScreen(
                             fontWeight = FontWeight.Bold,
                         )
                     }
-                    Button(onClick = ::submit, modifier = Modifier.fillMaxWidth().height(54.dp)) {
-                        Text("Entrar")
-                    }
+                    LoginButton(status = status, onClick = ::submit)
                 }
             }
         }
@@ -278,5 +279,41 @@ private fun KeepConnected(checked: Boolean, onToggle: () -> Unit) {
             fontSize = 12.5.sp,
             fontWeight = FontWeight.SemiBold,
         )
+    }
+}
+
+@Composable
+private fun LoginButton(status: LoginStatus, onClick: () -> Unit) {
+    Button(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth().height(54.dp),
+        shape = RoundedCornerShape(17.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (status == LoginStatus.Success) RangoColors.Success else MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary,
+        ),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+            if (status == LoginStatus.Loading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(19.dp),
+                    color = Color.White,
+                    trackColor = Color.White.copy(alpha = 0.35f),
+                    strokeWidth = 2.5.dp,
+                )
+            }
+            if (status == LoginStatus.Success) {
+                Text("✓", fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
+            }
+            Text(
+                text = when (status) {
+                    LoginStatus.Idle -> "Entrar"
+                    LoginStatus.Loading -> "Entrando..."
+                    LoginStatus.Success -> "Bem-vinda!"
+                },
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+            )
+        }
     }
 }
