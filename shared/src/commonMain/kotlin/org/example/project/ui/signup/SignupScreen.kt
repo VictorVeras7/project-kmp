@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,6 +29,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.example.project.ui.components.AuthField
 import org.example.project.ui.components.BackButton
 
@@ -48,6 +51,8 @@ fun SignupScreen(
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var touched by remember { mutableStateOf(false) }
+    var loading by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     fun validate(): Map<SignupField, String> = buildMap {
         if (name.trim().length < 3) put(SignupField.Name, "Informe seu nome completo.")
@@ -60,6 +65,19 @@ fun SignupScreen(
     }
 
     val errors = if (touched) validate() else emptyMap()
+
+    fun submit() {
+        if (loading) return
+        touched = true
+        if (validate().isNotEmpty()) return
+
+        scope.launch {
+            loading = true
+            delay(1100)
+            loading = false
+            onSignupSuccess(name.trim(), email, phone)
+        }
+    }
 
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         Column(
