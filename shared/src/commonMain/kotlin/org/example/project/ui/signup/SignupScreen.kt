@@ -40,6 +40,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
@@ -47,6 +48,7 @@ import kotlinx.coroutines.launch
 import org.example.project.ui.components.AuthField
 import org.example.project.ui.components.BackButton
 import org.example.project.ui.components.RangoCheckbox
+import org.example.project.ui.theme.RangoTheme
 
 private val EmailPattern = Regex("^[^@\\s]+@[^@\\s]+\\.[a-z]{2,}$", RegexOption.IGNORE_CASE)
 
@@ -264,5 +266,21 @@ private fun TermsRow(checked: Boolean, error: Boolean, onToggle: () -> Unit) {
                 fontWeight = FontWeight.SemiBold,
             )
         }
+    }
+}
+
+@Preview
+@Composable
+private fun SignupScreenPreview() {
+    RangoTheme(darkTheme = false) {
+        SignupScreen(onBack = {}, onSignupSuccess = { _, _, _ -> }, onLogin = {})
+    }
+}
+
+@Preview
+@Composable
+private fun SignupScreenDarkPreview() {
+    RangoTheme(darkTheme = true) {
+        SignupScreen(onBack = {}, onSignupSuccess = { _, _, _ -> }, onLogin = {})
     }
 }
