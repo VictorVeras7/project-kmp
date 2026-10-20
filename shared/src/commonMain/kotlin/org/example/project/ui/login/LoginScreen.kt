@@ -46,6 +46,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+private val EmailPattern = Regex("^[^@\\s]+@[^@\\s]+\\.[a-z]{2,}$", RegexOption.IGNORE_CASE)
 
 private enum class LoginStatus { Idle, Loading, Success }
 
@@ -66,7 +67,11 @@ fun LoginScreen(
     var status by remember { mutableStateOf(LoginStatus.Idle) }
 
     fun submit() {
-        emailError = if (email.isBlank()) "Informe seu e-mail." else ""
+        emailError = when {
+            email.isBlank() -> "Informe seu e-mail."
+            !EmailPattern.matches(email) -> "E-mail inválido."
+            else -> ""
+        }
         passwordError = if (password.isEmpty()) "Informe sua senha." else ""
         if (emailError.isNotEmpty() || passwordError.isNotEmpty()) return
 
