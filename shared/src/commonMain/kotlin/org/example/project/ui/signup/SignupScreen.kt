@@ -31,6 +31,10 @@ import androidx.compose.ui.unit.sp
 import org.example.project.ui.components.AuthField
 import org.example.project.ui.components.BackButton
 
+private val EmailPattern = Regex("^[^@\\s]+@[^@\\s]+\\.[a-z]{2,}$", RegexOption.IGNORE_CASE)
+
+private enum class SignupField { Name, Email, Phone, Password, ConfirmPassword }
+
 @Composable
 fun SignupScreen(
     onBack: () -> Unit,
@@ -43,6 +47,19 @@ fun SignupScreen(
     var phone by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
+    var touched by remember { mutableStateOf(false) }
+
+    fun validate(): Map<SignupField, String> = buildMap {
+        if (name.trim().length < 3) put(SignupField.Name, "Informe seu nome completo.")
+        if (!EmailPattern.matches(email)) put(SignupField.Email, "E-mail inválido.")
+        if (phone.count { it.isDigit() } < 10) put(SignupField.Phone, "Telefone incompleto.")
+        if (password.length < 6) put(SignupField.Password, "Mínimo de 6 caracteres.")
+        if (confirmPassword.isEmpty() || confirmPassword != password) {
+            put(SignupField.ConfirmPassword, "As senhas não coincidem.")
+        }
+    }
+
+    val errors = if (touched) validate() else emptyMap()
 
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         Column(
@@ -75,42 +92,47 @@ fun SignupScreen(
                     value = name,
                     onValueChange = { name = it },
                     placeholder = "Maria Silva",
-                    error = "",
+                    error = errors[SignupField.Name].orEmpty(),
                     keyboardType = KeyboardType.Text,
+                    valid = touched && SignupField.Name !in errors && name.isNotEmpty(),
                 )
                 AuthField(
                     label = "E-mail",
                     value = email,
                     onValueChange = { email = it },
                     placeholder = "voce@email.com",
-                    error = "",
+                    error = errors[SignupField.Email].orEmpty(),
                     keyboardType = KeyboardType.Email,
+                    valid = touched && SignupField.Email !in errors && email.isNotEmpty(),
                 )
                 AuthField(
                     label = "Telefone",
                     value = phone,
                     onValueChange = { phone = it },
                     placeholder = "(11) 90000-0000",
-                    error = "",
+                    error = errors[SignupField.Phone].orEmpty(),
                     keyboardType = KeyboardType.Phone,
+                    valid = touched && SignupField.Phone !in errors && phone.isNotEmpty(),
                 )
                 AuthField(
                     label = "Senha",
                     value = password,
                     onValueChange = { password = it },
                     placeholder = "Mínimo 6 caracteres",
-                    error = "",
+                    error = errors[SignupField.Password].orEmpty(),
                     keyboardType = KeyboardType.Password,
                     visualTransformation = PasswordVisualTransformation(),
+                    valid = touched && SignupField.Password !in errors && password.isNotEmpty(),
                 )
                 AuthField(
                     label = "Confirmar senha",
                     value = confirmPassword,
                     onValueChange = { confirmPassword = it },
                     placeholder = "Repita a senha",
-                    error = "",
+                    error = errors[SignupField.ConfirmPassword].orEmpty(),
                     keyboardType = KeyboardType.Password,
                     visualTransformation = PasswordVisualTransformation(),
+                    valid = touched && SignupField.ConfirmPassword !in errors && confirmPassword.isNotEmpty(),
                 )
             }
         }
