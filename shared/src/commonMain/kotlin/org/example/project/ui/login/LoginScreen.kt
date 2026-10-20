@@ -25,6 +25,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -46,6 +47,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 
+private enum class LoginStatus { Idle, Loading, Success }
+
 @Composable
 fun LoginScreen(
     onBack: () -> Unit,
@@ -58,6 +61,17 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
     var showPassword by remember { mutableStateOf(false) }
     var keepConnected by remember { mutableStateOf(false) }
+    var emailError by remember { mutableStateOf("") }
+    var passwordError by remember { mutableStateOf("") }
+    var status by remember { mutableStateOf(LoginStatus.Idle) }
+
+    fun submit() {
+        emailError = if (email.isBlank()) "Informe seu e-mail." else ""
+        passwordError = if (password.isEmpty()) "Informe sua senha." else ""
+        if (emailError.isNotEmpty() || passwordError.isNotEmpty()) return
+
+        onLoginSuccess(keepConnected)
+    }
 
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         Column(
@@ -92,6 +106,7 @@ fun LoginScreen(
                         value = email,
                         onValueChange = { email = it },
                         placeholder = "voce@email.com",
+                        error = emailError,
                         keyboardType = KeyboardType.Email,
                     )
                     LoginField(
@@ -99,6 +114,7 @@ fun LoginScreen(
                         value = password,
                         onValueChange = { password = it },
                         placeholder = "Sua senha",
+                        error = passwordError,
                         keyboardType = KeyboardType.Password,
                         visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
                         trailing = {
@@ -125,6 +141,9 @@ fun LoginScreen(
                             fontWeight = FontWeight.Bold,
                         )
                     }
+                    Button(onClick = ::submit, modifier = Modifier.fillMaxWidth().height(54.dp)) {
+                        Text("Entrar")
+                    }
                 }
             }
         }
@@ -149,11 +168,12 @@ private fun LoginField(
     value: String,
     onValueChange: (String) -> Unit,
     placeholder: String,
+    error: String,
     keyboardType: KeyboardType,
     visualTransformation: VisualTransformation = VisualTransformation.None,
     trailing: (@Composable () -> Unit)? = null,
 ) {
-    val borderColor = MaterialTheme.colorScheme.outline
+    val borderColor = if (error.isNotEmpty()) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outline
     Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
         Text(
             text = label,
@@ -199,6 +219,14 @@ private fun LoginField(
                 },
             )
             trailing?.invoke()
+        }
+        if (error.isNotEmpty()) {
+            Text(
+                text = error,
+                color = MaterialTheme.colorScheme.error,
+                fontSize = 11.5.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
         }
     }
 }
