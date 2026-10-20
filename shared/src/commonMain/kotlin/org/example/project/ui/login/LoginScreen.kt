@@ -35,6 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -56,6 +57,7 @@ fun LoginScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var showPassword by remember { mutableStateOf(false) }
+    var keepConnected by remember { mutableStateOf(false) }
 
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         Column(
@@ -109,6 +111,20 @@ fun LoginScreen(
                             )
                         },
                     )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        KeepConnected(checked = keepConnected, onToggle = { keepConnected = !keepConnected })
+                        Text(
+                            text = "Esqueci minha senha",
+                            modifier = Modifier.clickable(onClick = onForgotPassword),
+                            color = MaterialTheme.colorScheme.primary,
+                            fontSize = 12.5.sp,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
                 }
             }
         }
@@ -184,5 +200,31 @@ private fun LoginField(
             )
             trailing?.invoke()
         }
+    }
+}
+
+@Composable
+private fun KeepConnected(checked: Boolean, onToggle: () -> Unit) {
+    val primary = MaterialTheme.colorScheme.primary
+    Row(
+        modifier = Modifier.clickable(onClick = onToggle),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .size(21.dp)
+                .background(if (checked) primary else Color.Transparent, RoundedCornerShape(7.dp))
+                .border(1.5.dp, if (checked) primary else MaterialTheme.colorScheme.outline, RoundedCornerShape(7.dp)),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (checked) Text("✓", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold)
+        }
+        Text(
+            text = "Manter conectado",
+            color = MaterialTheme.colorScheme.onBackground,
+            fontSize = 12.5.sp,
+            fontWeight = FontWeight.SemiBold,
+        )
     }
 }
