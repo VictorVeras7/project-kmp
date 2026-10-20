@@ -46,11 +46,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.example.project.ui.theme.RangoColors
+import org.example.project.ui.theme.RangoTheme
 
 private const val DemoPassword = "rango123"
 private val EmailPattern = Regex("^[^@\\s]+@[^@\\s]+\\.[a-z]{2,}$", RegexOption.IGNORE_CASE)
@@ -335,5 +337,21 @@ private fun LoginButton(status: LoginStatus, onClick: () -> Unit) {
                 fontWeight = FontWeight.Bold,
             )
         }
+    }
+}
+
+@Preview
+@Composable
+private fun LoginScreenPreview() {
+    RangoTheme(darkTheme = false) {
+        LoginScreen(onBack = {}, onLoginSuccess = {}, onForgotPassword = {}, onSignup = {})
+    }
+}
+
+@Preview
+@Composable
+private fun LoginScreenDarkPreview() {
+    RangoTheme(darkTheme = true) {
+        LoginScreen(onBack = {}, onLoginSuccess = {}, onForgotPassword = {}, onSignup = {})
     }
 }
