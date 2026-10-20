@@ -1,8 +1,6 @@
 package org.example.project.ui.login
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,8 +20,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -40,8 +36,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -51,6 +45,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.example.project.ui.components.AuthField
+import org.example.project.ui.components.BackButton
+import org.example.project.ui.components.RangoCheckbox
 import org.example.project.ui.theme.RangoColors
 import org.example.project.ui.theme.RangoTheme
 
@@ -130,7 +127,7 @@ fun LoginScreen(
                 )
                 Spacer(Modifier.height(24.dp))
                 Column(verticalArrangement = Arrangement.spacedBy(15.dp)) {
-                    LoginField(
+                    AuthField(
                         label = "E-mail",
                         value = email,
                         onValueChange = { email = it },
@@ -138,7 +135,7 @@ fun LoginScreen(
                         error = emailError,
                         keyboardType = KeyboardType.Email,
                     )
-                    LoginField(
+                    AuthField(
                         label = "Senha",
                         value = password,
                         onValueChange = { password = it },
@@ -198,103 +195,13 @@ fun LoginScreen(
 }
 
 @Composable
-private fun BackButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .size(40.dp)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text("←", color = MaterialTheme.colorScheme.onBackground, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-    }
-}
-
-@Composable
-private fun LoginField(
-    label: String,
-    value: String,
-    onValueChange: (String) -> Unit,
-    placeholder: String,
-    error: String,
-    keyboardType: KeyboardType,
-    visualTransformation: VisualTransformation = VisualTransformation.None,
-    trailing: (@Composable () -> Unit)? = null,
-) {
-    val borderColor = if (error.isNotEmpty()) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outline
-    Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
-        Text(
-            text = label,
-            color = MaterialTheme.colorScheme.onBackground,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold,
-        )
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(54.dp)
-                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(15.dp))
-                .border(BorderStroke(1.5.dp, borderColor), RoundedCornerShape(15.dp))
-                .padding(horizontal = 15.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            BasicTextField(
-                value = value,
-                onValueChange = onValueChange,
-                modifier = Modifier.weight(1f),
-                singleLine = true,
-                textStyle = TextStyle(
-                    color = MaterialTheme.colorScheme.onBackground,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium,
-                ),
-                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-                visualTransformation = visualTransformation,
-                decorationBox = { inner ->
-                    Box(contentAlignment = Alignment.CenterStart) {
-                        if (value.isEmpty()) {
-                            Text(
-                                text = placeholder,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Medium,
-                            )
-                        }
-                        inner()
-                    }
-                },
-            )
-            trailing?.invoke()
-        }
-        if (error.isNotEmpty()) {
-            Text(
-                text = error,
-                color = MaterialTheme.colorScheme.error,
-                fontSize = 11.5.sp,
-                fontWeight = FontWeight.SemiBold,
-            )
-        }
-    }
-}
-
-@Composable
 private fun KeepConnected(checked: Boolean, onToggle: () -> Unit) {
-    val primary = MaterialTheme.colorScheme.primary
     Row(
         modifier = Modifier.clickable(onClick = onToggle),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Box(
-            modifier = Modifier
-                .size(21.dp)
-                .background(if (checked) primary else Color.Transparent, RoundedCornerShape(7.dp))
-                .border(1.5.dp, if (checked) primary else MaterialTheme.colorScheme.outline, RoundedCornerShape(7.dp)),
-            contentAlignment = Alignment.Center,
-        ) {
-            if (checked) Text("✓", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold)
-        }
+        RangoCheckbox(checked = checked)
         Text(
             text = "Manter conectado",
             color = MaterialTheme.colorScheme.onBackground,
