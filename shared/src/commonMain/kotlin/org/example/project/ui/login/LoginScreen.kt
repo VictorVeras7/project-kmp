@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -37,6 +38,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -51,6 +55,7 @@ fun LoginScreen(
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var showPassword by remember { mutableStateOf(false) }
 
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         Column(
@@ -85,12 +90,24 @@ fun LoginScreen(
                         value = email,
                         onValueChange = { email = it },
                         placeholder = "voce@email.com",
+                        keyboardType = KeyboardType.Email,
                     )
                     LoginField(
                         label = "Senha",
                         value = password,
                         onValueChange = { password = it },
                         placeholder = "Sua senha",
+                        keyboardType = KeyboardType.Password,
+                        visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                        trailing = {
+                            Text(
+                                text = if (showPassword) "Ocultar" else "Mostrar",
+                                modifier = Modifier.clickable { showPassword = !showPassword },
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                            )
+                        },
                     )
                 }
             }
@@ -116,6 +133,9 @@ private fun LoginField(
     value: String,
     onValueChange: (String) -> Unit,
     placeholder: String,
+    keyboardType: KeyboardType,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
+    trailing: (@Composable () -> Unit)? = null,
 ) {
     val borderColor = MaterialTheme.colorScheme.outline
     Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
@@ -146,6 +166,8 @@ private fun LoginField(
                     fontWeight = FontWeight.Medium,
                 ),
                 cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+                visualTransformation = visualTransformation,
                 decorationBox = { inner ->
                     Box(contentAlignment = Alignment.CenterStart) {
                         if (value.isEmpty()) {
@@ -160,6 +182,7 @@ private fun LoginField(
                     }
                 },
             )
+            trailing?.invoke()
         }
     }
 }
