@@ -35,3 +35,10 @@ val SampleProducts = listOf(
     Product("p13", "Açaí 500ml", "Doce Ponto", "Sobremesas", "Com banana, granola e mel", 24.9, 29.9, 4.7, 15, 25, 305f, setOf(ProductTag.Offer, ProductTag.Fast)),
     Product("p14", "Combo burger + fritas", "Casa do Burger", "Hambúrguer", "Burger, fritas grandes e bebida", 44.9, null, 4.6, 25, 35, 52f, setOf(ProductTag.Popular)),
 )
+
+fun formatMoney(value: Double): String {
+    val cents = (value * 100).toLong()
+    return "R$ ${cents / 100},${(cents % 100).toString().padStart(2, '0')}"
+}
+
+fun formatRating(value: Double): String = value.toString().replace('.', ',')
