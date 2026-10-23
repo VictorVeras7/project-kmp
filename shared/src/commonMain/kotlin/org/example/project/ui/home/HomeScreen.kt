@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -24,6 +25,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -57,6 +59,7 @@ fun HomeScreen(
             HomeHeader(userName, address, cartCount, onOpenNotifications, onOpenCart)
             SearchBar(onClick = onOpenSearch)
             CategoryChips(selected = category, onSelect = { category = it })
+            if (category == ProductCategories.first()) PromoBanner()
         }
     }
 }
@@ -196,5 +199,33 @@ private fun CategoryChips(selected: String, onSelect: (String) -> Unit) {
                     .padding(horizontal = 15.dp, vertical = 9.dp),
             )
         }
+    }
+}
+
+@Composable
+private fun PromoBanner() {
+    Column(
+        modifier = Modifier
+            .padding(horizontal = 18.dp)
+            .fillMaxWidth()
+            .background(
+                Brush.linearGradient(listOf(RangoColors.Primary, RangoColors.PrimarySoft)),
+                RoundedCornerShape(24.dp),
+            )
+            .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Text("SÓ HOJE", color = Color.White.copy(alpha = 0.85f), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+        Text("20% OFF acima\nde R$ 40", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold)
+        Spacer(Modifier.height(4.dp))
+        Text(
+            "RANGO20",
+            color = Color.White,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier
+                .background(Color.White.copy(alpha = 0.22f), RoundedCornerShape(10.dp))
+                .padding(horizontal = 10.dp, vertical = 5.dp),
+        )
     }
 }
