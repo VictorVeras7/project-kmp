@@ -9,16 +9,22 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -69,28 +75,40 @@ fun HomeScreen(
     var category by remember { mutableStateOf(ProductCategories.first()) }
 
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        Column(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)),
+        ) {
             HomeHeader(userName, address, cartCount, onOpenNotifications, onOpenCart)
-            SearchBar(onClick = onOpenSearch)
-            CategoryChips(selected = category, onSelect = { category = it })
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+                    .padding(bottom = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp),
+            ) {
+                SearchBar(onClick = onOpenSearch)
+                CategoryChips(selected = category, onSelect = { category = it })
 
-            if (category == ProductCategories.first()) {
-                PromoBanner()
-                HomeSections.forEach { section ->
-                    val items = products.filter { section.tag in it.tags }
-                    if (items.isNotEmpty()) {
-                        ProductRail(section.title, items, favoriteIds, onToggleFavorite, onAddToCart, onOpenProduct)
+                if (category == ProductCategories.first()) {
+                    PromoBanner()
+                    HomeSections.forEach { section ->
+                        val items = products.filter { section.tag in it.tags }
+                        if (items.isNotEmpty()) {
+                            ProductRail(section.title, items, favoriteIds, onToggleFavorite, onAddToCart, onOpenProduct)
+                        }
                     }
+                } else {
+                    CategoryGrid(
+                        title = category,
+                        items = products.filter { it.category == category },
+                        favoriteIds = favoriteIds,
+                        onToggleFavorite = onToggleFavorite,
+                        onAddToCart = onAddToCart,
+                        onOpenProduct = onOpenProduct,
+                    )
                 }
-            } else {
-                CategoryGrid(
-                    title = category,
-                    items = products.filter { it.category == category },
-                    favoriteIds = favoriteIds,
-                    onToggleFavorite = onToggleFavorite,
-                    onAddToCart = onAddToCart,
-                    onOpenProduct = onOpenProduct,
-                )
             }
         }
     }
