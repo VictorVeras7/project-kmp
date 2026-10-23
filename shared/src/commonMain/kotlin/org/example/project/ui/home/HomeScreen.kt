@@ -30,14 +30,17 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.example.project.data.Product
@@ -47,6 +50,7 @@ import org.example.project.data.SampleProducts
 import org.example.project.ui.components.ProductCard
 import org.example.project.ui.theme.RangoColors
 import org.example.project.ui.theme.RangoIcons
+import org.example.project.ui.theme.RangoTheme
 
 private data class HomeSection(val title: String, val tag: ProductTag)
 
@@ -348,5 +352,43 @@ private fun CategoryGrid(
                 if (pair.size == 1) Spacer(Modifier.weight(1f))
             }
         }
+    }
+}
+
+@Preview
+@Composable
+private fun HomeScreenPreview() {
+    RangoTheme(darkTheme = false) {
+        HomeScreen(
+            userName = "Marina Alves",
+            address = "Rua das Palmeiras, 128",
+            cartCount = 2,
+            favoriteIds = setOf("p5"),
+            onToggleFavorite = {},
+            onAddToCart = {},
+            onOpenProduct = {},
+            onOpenCart = {},
+            onOpenNotifications = {},
+            onOpenSearch = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun HomeScreenDarkPreview() {
+    RangoTheme(darkTheme = true) {
+        HomeScreen(
+            userName = "Marina Alves",
+            address = "Rua das Palmeiras, 128",
+            cartCount = 0,
+            favoriteIds = emptySet(),
+            onToggleFavorite = {},
+            onAddToCart = {},
+            onOpenProduct = {},
+            onOpenCart = {},
+            onOpenNotifications = {},
+            onOpenSearch = {},
+        )
     }
 }
