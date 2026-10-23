@@ -14,6 +14,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -33,9 +36,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.example.project.data.Product
 import org.example.project.data.ProductCategories
+import org.example.project.data.ProductTag
 import org.example.project.data.SampleProducts
+import org.example.project.ui.components.ProductCard
 import org.example.project.ui.theme.RangoColors
 import org.example.project.ui.theme.RangoIcons
+
+private data class HomeSection(val title: String, val tag: ProductTag)
+
+private val HomeSections = listOf(
+    HomeSection("Ofertas para você", ProductTag.Offer),
+    HomeSection("Mais pedidos", ProductTag.Popular),
+    HomeSection("Recomendados", ProductTag.Recommended),
+    HomeSection("Entrega rápida", ProductTag.Fast),
+)
 
 @Composable
 fun HomeScreen(
@@ -59,7 +73,25 @@ fun HomeScreen(
             HomeHeader(userName, address, cartCount, onOpenNotifications, onOpenCart)
             SearchBar(onClick = onOpenSearch)
             CategoryChips(selected = category, onSelect = { category = it })
-            if (category == ProductCategories.first()) PromoBanner()
+
+            if (category == ProductCategories.first()) {
+                PromoBanner()
+                HomeSections.forEach { section ->
+                    val items = products.filter { section.tag in it.tags }
+                    if (items.isNotEmpty()) {
+                        ProductRail(section.title, items, favoriteIds, onToggleFavorite, onAddToCart, onOpenProduct)
+                    }
+                }
+            } else {
+                CategoryGrid(
+                    title = category,
+                    items = products.filter { it.category == category },
+                    favoriteIds = favoriteIds,
+                    onToggleFavorite = onToggleFavorite,
+                    onAddToCart = onAddToCart,
+                    onOpenProduct = onOpenProduct,
+                )
+            }
         }
     }
 }
@@ -227,5 +259,76 @@ private fun PromoBanner() {
                 .background(Color.White.copy(alpha = 0.22f), RoundedCornerShape(10.dp))
                 .padding(horizontal = 10.dp, vertical = 5.dp),
         )
+    }
+}
+
+@Composable
+private fun ProductRail(
+    title: String,
+    items: List<Product>,
+    favoriteIds: Set<String>,
+    onToggleFavorite: (String) -> Unit,
+    onAddToCart: (String) -> Unit,
+    onOpenProduct: (String) -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(
+            title,
+            color = MaterialTheme.colorScheme.onBackground,
+            fontSize = 17.sp,
+            fontWeight = FontWeight.ExtraBold,
+            modifier = Modifier.padding(horizontal = 18.dp),
+        )
+        LazyRow(
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 18.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            items(items, key = { it.id }) { product ->
+                ProductCard(
+                    product = product,
+                    isFavorite = product.id in favoriteIds,
+                    onOpen = { onOpenProduct(product.id) },
+                    onToggleFavorite = { onToggleFavorite(product.id) },
+                    onAdd = { onAddToCart(product.id) },
+                    modifier = Modifier.width(168.dp),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CategoryGrid(
+    title: String,
+    items: List<Product>,
+    favoriteIds: Set<String>,
+    onToggleFavorite: (String) -> Unit,
+    onAddToCart: (String) -> Unit,
+    onOpenProduct: (String) -> Unit,
+) {
+    Column(modifier = Modifier.padding(horizontal = 18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.Bottom,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(title, color = MaterialTheme.colorScheme.onBackground, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
+            Text("${items.size} itens", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+        }
+        items.chunked(2).forEach { pair ->
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                pair.forEach { product ->
+                    ProductCard(
+                        product = product,
+                        isFavorite = product.id in favoriteIds,
+                        onOpen = { onOpenProduct(product.id) },
+                        onToggleFavorite = { onToggleFavorite(product.id) },
+                        onAdd = { onAddToCart(product.id) },
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+                if (pair.size == 1) Spacer(Modifier.weight(1f))
+            }
+        }
     }
 }
