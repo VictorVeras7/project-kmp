@@ -46,6 +46,22 @@ object RangoIcons {
     val Heart = icon("heart", false, HeartPath)
     val HeartFilled = icon("heart_filled", true, HeartPath)
     val Plus = icon("plus", false, "M12 5v14", "M5 12h14")
+    val Minus = icon("minus", false, "M5 12h14")
+    val ArrowBack = icon("arrow_back", false, "M19 12H5", "M12 19l-7-7 7-7")
+    val Clock = icon("clock", false, "M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0z", "M12 6v6l4 2")
+    val Bike = icon(
+        "bike", false,
+        "M22 17.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0z",
+        "M9 17.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0z",
+        "M16 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z",
+        "M12 17.5V14l-3-3 4-3 2 3h2",
+    )
+    val Cart = icon(
+        "cart", false,
+        "M9 21a1 1 0 1 1-2 0 1 1 0 0 1 2 0z",
+        "M20 21a1 1 0 1 1-2 0 1 1 0 0 1 2 0z",
+        "M2 2h2l2.7 12.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L22 7H5.1",
+    )
     val ChevronDown = icon("chevron_down", false, "M6 9l6 6 6-6")
     val Star = icon(
         "star", true,
