@@ -68,11 +68,12 @@ fun ProductDetailScreen(
     modifier: Modifier = Modifier,
     addons: List<Addon> = SampleAddons,
 ) {
-    var quantity by remember { mutableStateOf(1) }
-    var selectedAddons by remember { mutableStateOf(setOf<String>()) }
-    var notes by remember { mutableStateOf("") }
+    var quantity by remember(product.id) { mutableStateOf(1) }
+    var selectedAddons by remember(product.id) { mutableStateOf(setOf<String>()) }
+    var notes by remember(product.id) { mutableStateOf("") }
 
-    val total = product.price * quantity
+    val unitPrice = product.price + addons.filter { it.id in selectedAddons }.sumOf { it.price }
+    val total = unitPrice * quantity
 
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         Column(
@@ -114,9 +115,9 @@ fun ProductDetailScreen(
             BottomBar(
                 quantity = quantity,
                 total = total,
-                onMinus = { quantity = quantity - 1 },
+                onMinus = { quantity = (quantity - 1).coerceAtLeast(1) },
                 onPlus = { quantity++ },
-                onAdd = { onAddToCart(quantity, selectedAddons, notes) },
+                onAdd = { onAddToCart(quantity, selectedAddons, notes.trim()) },
             )
         }
     }
