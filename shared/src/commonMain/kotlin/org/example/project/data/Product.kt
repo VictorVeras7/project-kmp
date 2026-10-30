@@ -1,5 +1,7 @@
 package org.example.project.data
 
+import kotlin.math.roundToLong
+
 enum class ProductTag { Offer, Popular, Recommended, Fast }
 
 data class Product(
@@ -50,7 +52,7 @@ val SampleProducts = listOf(
 )
 
 fun formatMoney(value: Double): String {
-    val cents = (value * 100).toLong()
+    val cents = (value * 100).roundToLong()
     return "R$ ${cents / 100},${(cents % 100).toString().padStart(2, '0')}"
 }
 
