@@ -40,6 +40,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.example.project.data.Addon
@@ -47,11 +48,13 @@ import org.example.project.data.DeliveryFee
 import org.example.project.data.FreeDeliveryFrom
 import org.example.project.data.Product
 import org.example.project.data.SampleAddons
+import org.example.project.data.SampleProducts
 import org.example.project.data.formatMoney
 import org.example.project.data.formatRating
 import org.example.project.ui.components.RangoCheckbox
 import org.example.project.ui.theme.RangoColors
 import org.example.project.ui.theme.RangoIcons
+import org.example.project.ui.theme.RangoTheme
 
 private val HeroHeight = 296.dp
 private val SheetOverlap = 22.dp
@@ -437,5 +440,33 @@ private fun StepperButton(icon: ImageVector, onClick: () -> Unit) {
         contentAlignment = Alignment.Center,
     ) {
         Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(19.dp))
+    }
+}
+
+@Preview
+@Composable
+private fun ProductDetailScreenPreview() {
+    RangoTheme(darkTheme = false) {
+        ProductDetailScreen(
+            product = SampleProducts.first(),
+            isFavorite = false,
+            onBack = {},
+            onToggleFavorite = {},
+            onAddToCart = { _, _, _ -> },
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun ProductDetailScreenDarkPreview() {
+    RangoTheme(darkTheme = true) {
+        ProductDetailScreen(
+            product = SampleProducts[3],
+            isFavorite = true,
+            onBack = {},
+            onToggleFavorite = {},
+            onAddToCart = { _, _, _ -> },
+        )
     }
 }
