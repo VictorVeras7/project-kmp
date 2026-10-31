@@ -17,7 +17,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -33,16 +36,21 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.example.project.data.Addon
 import org.example.project.data.CartItem
+import org.example.project.data.CouponCode
 import org.example.project.data.Product
 import org.example.project.data.SampleAddons
 import org.example.project.data.SampleProducts
@@ -55,17 +63,21 @@ import org.example.project.ui.theme.RangoIcons
 @Composable
 fun CartScreen(
     items: List<CartItem>,
+    coupon: String,
+    couponApplied: Boolean,
     onBack: () -> Unit,
     onClear: () -> Unit,
     onChangeQuantity: (key: String, delta: Int) -> Unit,
     onRemove: (key: String) -> Unit,
     onOpenProduct: (String) -> Unit,
+    onCouponChange: (String) -> Unit,
+    onApplyCoupon: () -> Unit,
     onExplore: () -> Unit,
     modifier: Modifier = Modifier,
     products: List<Product> = SampleProducts,
     addons: List<Addon> = SampleAddons,
 ) {
-    val totals = items.totals(couponApplied = false)
+    val totals = items.totals(couponApplied)
     val count = items.itemCount()
 
     Column(
@@ -102,6 +114,12 @@ fun CartScreen(
                         onRemove = { onRemove(item.key) },
                     )
                 }
+                CouponRow(
+                    value = coupon,
+                    applied = couponApplied,
+                    onValueChange = onCouponChange,
+                    onApply = onApplyCoupon,
+                )
             }
         }
     }
@@ -340,5 +358,94 @@ private fun LineStepperButton(icon: ImageVector, description: String, onClick: (
         contentAlignment = Alignment.Center,
     ) {
         Icon(icon, contentDescription = description, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(17.dp))
+    }
+}
+
+@Composable
+private fun CouponRow(
+    value: String,
+    applied: Boolean,
+    onValueChange: (String) -> Unit,
+    onApply: () -> Unit,
+) {
+    val shape = RoundedCornerShape(15.dp)
+    val borderColor = if (applied) RangoColors.Success else MaterialTheme.colorScheme.outline
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+            Row(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(50.dp)
+                    .background(MaterialTheme.colorScheme.surfaceVariant, shape)
+                    .border(1.5.dp, borderColor, shape)
+                    .padding(horizontal = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(9.dp),
+            ) {
+                Icon(
+                    RangoIcons.Ticket,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(19.dp),
+                )
+                BasicTextField(
+                    value = value,
+                    onValueChange = { onValueChange(it.uppercase()) },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f),
+                    textStyle = TextStyle(
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontSize = 13.5.sp,
+                        fontWeight = FontWeight.Bold,
+                    ),
+                    keyboardOptions = KeyboardOptions(
+                        capitalization = KeyboardCapitalization.Characters,
+                        imeAction = ImeAction.Done,
+                    ),
+                    cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                    decorationBox = { inner ->
+                        Box {
+                            if (value.isEmpty()) {
+                                Text(
+                                    "Cupom promocional",
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontSize = 13.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                )
+                            }
+                            inner()
+                        }
+                    },
+                )
+                if (applied) {
+                    Box(
+                        modifier = Modifier.size(19.dp).background(RangoColors.Success, CircleShape),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(RangoIcons.Check, contentDescription = "Cupom aplicado", tint = Color.White, modifier = Modifier.size(12.dp))
+                    }
+                }
+            }
+            Box(
+                modifier = Modifier
+                    .height(50.dp)
+                    .clip(shape)
+                    .border(1.5.dp, RangoColors.Primary, shape)
+                    .clickable(onClick = onApply)
+                    .padding(horizontal = 18.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text("Aplicar", color = RangoColors.Primary, fontSize = 13.5.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+        if (applied) {
+            Text(
+                "Cupom $CouponCode aplicado · 10% off.",
+                color = RangoColors.Success,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.padding(start = 4.dp),
+            )
+        }
     }
 }
