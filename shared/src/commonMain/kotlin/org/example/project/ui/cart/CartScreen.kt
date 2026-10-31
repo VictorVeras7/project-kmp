@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -27,8 +28,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -48,6 +51,7 @@ fun CartScreen(
     items: List<CartItem>,
     onBack: () -> Unit,
     onClear: () -> Unit,
+    onChangeQuantity: (key: String, delta: Int) -> Unit,
     onRemove: (key: String) -> Unit,
     onOpenProduct: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -86,6 +90,8 @@ fun CartScreen(
                         product = product,
                         addonNames = addons.filter { it.id in item.addonIds }.joinToString(" · ") { it.name },
                         onOpen = { onOpenProduct(product.id) },
+                        onMinus = { onChangeQuantity(item.key, -1) },
+                        onPlus = { onChangeQuantity(item.key, 1) },
                         onRemove = { onRemove(item.key) },
                     )
                 }
@@ -152,6 +158,8 @@ private fun CartLine(
     product: Product,
     addonNames: String,
     onOpen: () -> Unit,
+    onMinus: () -> Unit,
+    onPlus: () -> Unit,
     onRemove: () -> Unit,
 ) {
     val shape = RoundedCornerShape(20.dp)
@@ -217,12 +225,7 @@ private fun CartLine(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(
-                    "${item.quantity}x",
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontSize = 13.5.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                )
+                LineStepper(item.quantity, onMinus, onPlus)
                 Text(
                     formatMoney(item.unitPrice * item.quantity),
                     color = RangoColors.Primary,
@@ -231,5 +234,44 @@ private fun CartLine(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun LineStepper(quantity: Int, onMinus: () -> Unit, onPlus: () -> Unit) {
+    val shape = RoundedCornerShape(12.dp)
+    Row(
+        modifier = Modifier
+            .background(MaterialTheme.colorScheme.surfaceVariant, shape)
+            .border(1.dp, MaterialTheme.colorScheme.outline, shape)
+            .padding(3.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        LineStepperButton(RangoIcons.Minus, "Diminuir", onMinus)
+        Text(
+            quantity.toString(),
+            color = MaterialTheme.colorScheme.onSurface,
+            fontSize = 13.5.sp,
+            fontWeight = FontWeight.ExtraBold,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.widthIn(min = 22.dp),
+        )
+        LineStepperButton(RangoIcons.Plus, "Aumentar", onPlus)
+    }
+}
+
+@Composable
+private fun LineStepperButton(icon: ImageVector, description: String, onClick: () -> Unit) {
+    val shape = RoundedCornerShape(9.dp)
+    Box(
+        modifier = Modifier
+            .size(28.dp)
+            .clip(shape)
+            .background(MaterialTheme.colorScheme.surface, shape)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(icon, contentDescription = description, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(17.dp))
     }
 }
