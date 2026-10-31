@@ -19,6 +19,8 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -26,8 +28,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -54,6 +60,7 @@ fun CartScreen(
     onChangeQuantity: (key: String, delta: Int) -> Unit,
     onRemove: (key: String) -> Unit,
     onOpenProduct: (String) -> Unit,
+    onExplore: () -> Unit,
     modifier: Modifier = Modifier,
     products: List<Product> = SampleProducts,
     addons: List<Addon> = SampleAddons,
@@ -74,7 +81,7 @@ fun CartScreen(
             onClear = onClear,
         )
         if (items.isEmpty()) {
-            Box(Modifier.weight(1f))
+            EmptyCart(onExplore = onExplore, modifier = Modifier.weight(1f))
         } else {
             Column(
                 modifier = Modifier
@@ -149,6 +156,66 @@ private fun CartHeader(summary: String, showClear: Boolean, onBack: () -> Unit, 
             }
         }
         Box(Modifier.fillMaxWidth().height(1.dp).background(MaterialTheme.colorScheme.outline))
+    }
+}
+
+@Composable
+private fun EmptyCart(onExplore: () -> Unit, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier.fillMaxWidth().padding(30.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(15.dp, Alignment.CenterVertically),
+    ) {
+        val borderColor = MaterialTheme.colorScheme.outline
+        Box(
+            modifier = Modifier
+                .size(132.dp)
+                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(44.dp))
+                .drawBehind {
+                    drawRoundRect(
+                        color = borderColor,
+                        cornerRadius = CornerRadius(44.dp.toPx()),
+                        style = Stroke(
+                            width = 1.dp.toPx(),
+                            pathEffect = PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 4.dp.toPx())),
+                        ),
+                    )
+                },
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                RangoIcons.CartOff,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(58.dp),
+            )
+        }
+        Text(
+            "Seu carrinho está vazio",
+            color = MaterialTheme.colorScheme.onSurface,
+            fontSize = 19.sp,
+            fontWeight = FontWeight.ExtraBold,
+        )
+        Text(
+            "Explore os restaurantes e adicione seus pratos favoritos.",
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontSize = 13.5.sp,
+            lineHeight = 20.sp,
+            fontWeight = FontWeight.Medium,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.widthIn(max = 250.dp),
+        )
+        Button(
+            onClick = onExplore,
+            modifier = Modifier.padding(top = 6.dp).height(50.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+            ),
+        ) {
+            Text("Explorar produtos", fontSize = 14.5.sp, fontWeight = FontWeight.Bold)
+        }
     }
 }
 
