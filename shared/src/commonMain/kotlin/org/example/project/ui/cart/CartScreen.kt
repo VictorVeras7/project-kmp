@@ -28,6 +28,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -79,6 +83,8 @@ fun CartScreen(
 ) {
     val totals = items.totals(couponApplied)
     val count = items.itemCount()
+    // Só mostra erro depois de tentar aplicar; volta ao normal ao editar o cupom.
+    var couponTried by remember { mutableStateOf(false) }
 
     Column(
         modifier = modifier
@@ -117,8 +123,15 @@ fun CartScreen(
                 CouponRow(
                     value = coupon,
                     applied = couponApplied,
-                    onValueChange = onCouponChange,
-                    onApply = onApplyCoupon,
+                    invalid = couponTried && !couponApplied,
+                    onValueChange = {
+                        couponTried = false
+                        onCouponChange(it)
+                    },
+                    onApply = {
+                        couponTried = true
+                        onApplyCoupon()
+                    },
                 )
             }
         }
@@ -365,11 +378,16 @@ private fun LineStepperButton(icon: ImageVector, description: String, onClick: (
 private fun CouponRow(
     value: String,
     applied: Boolean,
+    invalid: Boolean,
     onValueChange: (String) -> Unit,
     onApply: () -> Unit,
 ) {
     val shape = RoundedCornerShape(15.dp)
-    val borderColor = if (applied) RangoColors.Success else MaterialTheme.colorScheme.outline
+    val borderColor = when {
+        applied -> RangoColors.Success
+        invalid -> RangoColors.Error
+        else -> MaterialTheme.colorScheme.outline
+    }
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
             Row(
@@ -438,10 +456,10 @@ private fun CouponRow(
                 Text("Aplicar", color = RangoColors.Primary, fontSize = 13.5.sp, fontWeight = FontWeight.Bold)
             }
         }
-        if (applied) {
+        if (applied || invalid) {
             Text(
-                "Cupom $CouponCode aplicado · 10% off.",
-                color = RangoColors.Success,
+                if (applied) "Cupom $CouponCode aplicado · 10% off." else "Cupom inválido.",
+                color = if (applied) RangoColors.Success else RangoColors.Error,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.padding(start = 4.dp),
