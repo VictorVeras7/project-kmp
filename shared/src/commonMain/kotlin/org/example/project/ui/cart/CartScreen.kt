@@ -26,6 +26,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -92,56 +93,59 @@ fun CartScreen(
     // Só mostra erro depois de tentar aplicar; volta ao normal ao editar o cupom.
     var couponTried by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surfaceVariant)
-            .windowInsetsPadding(WindowInsets.safeDrawing),
-    ) {
-        CartHeader(
-            summary = if (count == 0) "nenhum item" else "${itemsLabel(count)} · ${formatMoney(totals.subtotal)}",
-            showClear = items.isNotEmpty(),
-            onBack = onBack,
-            onClear = onClear,
-        )
-        if (items.isEmpty()) {
-            EmptyCart(onExplore = onExplore, modifier = Modifier.weight(1f))
-        } else {
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .verticalScroll(rememberScrollState())
-                    .padding(start = 18.dp, end = 18.dp, top = 16.dp, bottom = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp),
-            ) {
-                items.forEach { item ->
-                    val product = products.firstOrNull { it.id == item.productId } ?: return@forEach
-                    CartLine(
-                        item = item,
-                        product = product,
-                        addonNames = addons.filter { it.id in item.addonIds }.joinToString(" · ") { it.name },
-                        onOpen = { onOpenProduct(product.id) },
-                        onMinus = { onChangeQuantity(item.key, -1) },
-                        onPlus = { onChangeQuantity(item.key, 1) },
-                        onRemove = { onRemove(item.key) },
+    // Fundo branco atrás da barra de status, igual ao cabeçalho; conteúdo em cinza claro.
+    Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.safeDrawing)
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+        ) {
+            CartHeader(
+                summary = if (count == 0) "nenhum item" else "${itemsLabel(count)} · ${formatMoney(totals.subtotal)}",
+                showClear = items.isNotEmpty(),
+                onBack = onBack,
+                onClear = onClear,
+            )
+            if (items.isEmpty()) {
+                EmptyCart(onExplore = onExplore, modifier = Modifier.weight(1f))
+            } else {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState())
+                        .padding(start = 18.dp, end = 18.dp, top = 16.dp, bottom = 20.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                ) {
+                    items.forEach { item ->
+                        val product = products.firstOrNull { it.id == item.productId } ?: return@forEach
+                        CartLine(
+                            item = item,
+                            product = product,
+                            addonNames = addons.filter { it.id in item.addonIds }.joinToString(" · ") { it.name },
+                            onOpen = { onOpenProduct(product.id) },
+                            onMinus = { onChangeQuantity(item.key, -1) },
+                            onPlus = { onChangeQuantity(item.key, 1) },
+                            onRemove = { onRemove(item.key) },
+                        )
+                    }
+                    CouponRow(
+                        value = coupon,
+                        applied = couponApplied,
+                        invalid = couponTried && !couponApplied,
+                        onValueChange = {
+                            couponTried = false
+                            onCouponChange(it)
+                        },
+                        onApply = {
+                            couponTried = true
+                            onApplyCoupon()
+                        },
                     )
+                    SummaryCard(totals)
                 }
-                CouponRow(
-                    value = coupon,
-                    applied = couponApplied,
-                    invalid = couponTried && !couponApplied,
-                    onValueChange = {
-                        couponTried = false
-                        onCouponChange(it)
-                    },
-                    onApply = {
-                        couponTried = true
-                        onApplyCoupon()
-                    },
-                )
-                SummaryCard(totals)
+                CartBottomBar(total = totals.total, onCheckout = onCheckout, onContinue = onExplore)
             }
-            CartBottomBar(total = totals.total, onCheckout = onCheckout, onContinue = onExplore)
         }
     }
 }
