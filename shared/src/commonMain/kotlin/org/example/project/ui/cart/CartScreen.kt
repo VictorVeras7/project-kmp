@@ -51,6 +51,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.example.project.data.Addon
@@ -60,11 +61,13 @@ import org.example.project.data.CouponCode
 import org.example.project.data.Product
 import org.example.project.data.SampleAddons
 import org.example.project.data.SampleProducts
+import org.example.project.data.add
 import org.example.project.data.formatMoney
 import org.example.project.data.itemCount
 import org.example.project.data.totals
 import org.example.project.ui.theme.RangoColors
 import org.example.project.ui.theme.RangoIcons
+import org.example.project.ui.theme.RangoTheme
 
 @Composable
 fun CartScreen(
@@ -567,5 +570,72 @@ private fun CartBottomBar(total: Double, onCheckout: () -> Unit, onContinue: () 
                 )
             }
         }
+    }
+}
+
+private val PreviewCart = emptyList<CartItem>()
+    .add(SampleProducts[0], 1, setOf("a1"), "sem cebola")
+    .add(SampleProducts[1], 2)
+
+@Preview
+@Composable
+private fun CartScreenPreview() {
+    RangoTheme(darkTheme = false) {
+        CartScreen(
+            items = PreviewCart,
+            coupon = CouponCode,
+            couponApplied = true,
+            onBack = {},
+            onClear = {},
+            onChangeQuantity = { _, _ -> },
+            onRemove = {},
+            onOpenProduct = {},
+            onCouponChange = {},
+            onApplyCoupon = {},
+            onCheckout = {},
+            onExplore = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun CartScreenDarkPreview() {
+    RangoTheme(darkTheme = true) {
+        CartScreen(
+            items = PreviewCart,
+            coupon = "",
+            couponApplied = false,
+            onBack = {},
+            onClear = {},
+            onChangeQuantity = { _, _ -> },
+            onRemove = {},
+            onOpenProduct = {},
+            onCouponChange = {},
+            onApplyCoupon = {},
+            onCheckout = {},
+            onExplore = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun CartScreenEmptyPreview() {
+    RangoTheme(darkTheme = false) {
+        CartScreen(
+            items = emptyList(),
+            coupon = "",
+            couponApplied = false,
+            onBack = {},
+            onClear = {},
+            onChangeQuantity = { _, _ -> },
+            onRemove = {},
+            onOpenProduct = {},
+            onCouponChange = {},
+            onApplyCoupon = {},
+            onCheckout = {},
+            onExplore = {},
+        )
     }
 }
