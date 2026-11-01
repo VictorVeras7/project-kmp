@@ -45,11 +45,15 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.input.TransformedText
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -386,6 +390,12 @@ private fun LineStepperButton(icon: ImageVector, description: String, onClick: (
     }
 }
 
+// Mostra o cupom em maiúsculas sem alterar o texto digitado (alterar quebra a composição do teclado).
+private val UppercaseTransformation = VisualTransformation { text ->
+    val upper = text.text.uppercase()
+    TransformedText(AnnotatedString(if (upper.length == text.length) upper else text.text), OffsetMapping.Identity)
+}
+
 @Composable
 private fun CouponRow(
     value: String,
@@ -420,8 +430,9 @@ private fun CouponRow(
                 )
                 BasicTextField(
                     value = value,
-                    onValueChange = { onValueChange(it.uppercase()) },
+                    onValueChange = onValueChange,
                     singleLine = true,
+                    visualTransformation = UppercaseTransformation,
                     modifier = Modifier.weight(1f),
                     textStyle = TextStyle(
                         color = MaterialTheme.colorScheme.onSurface,
