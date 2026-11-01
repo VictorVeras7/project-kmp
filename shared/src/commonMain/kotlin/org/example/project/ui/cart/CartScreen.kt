@@ -27,6 +27,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -54,6 +55,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.example.project.data.Addon
 import org.example.project.data.CartItem
+import org.example.project.data.CartTotals
 import org.example.project.data.CouponCode
 import org.example.project.data.Product
 import org.example.project.data.SampleAddons
@@ -76,6 +78,7 @@ fun CartScreen(
     onOpenProduct: (String) -> Unit,
     onCouponChange: (String) -> Unit,
     onApplyCoupon: () -> Unit,
+    onCheckout: () -> Unit,
     onExplore: () -> Unit,
     modifier: Modifier = Modifier,
     products: List<Product> = SampleProducts,
@@ -133,7 +136,9 @@ fun CartScreen(
                         onApplyCoupon()
                     },
                 )
+                SummaryCard(totals)
             }
+            CartBottomBar(total = totals.total, onCheckout = onCheckout, onContinue = onExplore)
         }
     }
 }
@@ -464,6 +469,103 @@ private fun CouponRow(
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.padding(start = 4.dp),
             )
+        }
+    }
+}
+
+@Composable
+private fun SummaryCard(totals: CartTotals) {
+    val shape = RoundedCornerShape(20.dp)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surface, shape)
+            .border(1.dp, MaterialTheme.colorScheme.outline, shape)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(11.dp),
+    ) {
+        SummaryRow("Subtotal", formatMoney(totals.subtotal), MaterialTheme.colorScheme.onSurface)
+        SummaryRow(
+            "Taxa de entrega",
+            if (totals.delivery == 0.0) "Grátis" else formatMoney(totals.delivery),
+            if (totals.delivery == 0.0) RangoColors.Success else MaterialTheme.colorScheme.onSurface,
+        )
+        if (totals.discount > 0.0) {
+            SummaryRow("Desconto · $CouponCode", "- ${formatMoney(totals.discount)}", RangoColors.Success)
+        }
+        Box(Modifier.fillMaxWidth().height(1.dp).background(MaterialTheme.colorScheme.outline))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text("Total", color = MaterialTheme.colorScheme.onSurface, fontSize = 14.5.sp, fontWeight = FontWeight.ExtraBold)
+            Text(
+                formatMoney(totals.total),
+                color = RangoColors.Primary,
+                fontSize = 22.sp,
+                fontWeight = FontWeight.ExtraBold,
+                letterSpacing = (-0.6).sp,
+            )
+        }
+    }
+}
+
+@Composable
+private fun SummaryRow(label: String, value: String, valueColor: Color) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+        Text(value, color = valueColor, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+    }
+}
+
+@Composable
+private fun CartBottomBar(total: Double, onCheckout: () -> Unit, onContinue: () -> Unit) {
+    Column(modifier = Modifier.background(MaterialTheme.colorScheme.surface)) {
+        Box(Modifier.fillMaxWidth().height(1.dp).background(MaterialTheme.colorScheme.outline))
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 18.dp, end = 18.dp, top = 12.dp, bottom = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(9.dp),
+        ) {
+            val shape = RoundedCornerShape(17.dp)
+            Button(
+                onClick = onCheckout,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(54.dp)
+                    .shadow(10.dp, shape, ambientColor = RangoColors.Primary, spotColor = RangoColors.Primary),
+                shape = shape,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                ),
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text("Finalizar pedido", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Text(formatMoney(total), fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+            TextButton(
+                onClick = onContinue,
+                modifier = Modifier.fillMaxWidth().height(46.dp),
+                shape = RoundedCornerShape(15.dp),
+            ) {
+                Text(
+                    "Continuar comprando",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 13.5.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
         }
     }
 }
