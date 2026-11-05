@@ -31,12 +31,15 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.example.project.data.DeliveryAddress
+import org.example.project.data.SampleAddresses
 import org.example.project.data.newAddress
 import org.example.project.ui.theme.RangoColors
 import org.example.project.ui.theme.RangoIcons
+import org.example.project.ui.theme.RangoTheme
 
 private val MapColor = Color(0xFFCFE3D8)
 
@@ -185,5 +188,21 @@ private fun AddAddressButton(onClick: () -> Unit) {
             fontSize = 13.5.sp,
             fontWeight = FontWeight.Bold,
         )
+    }
+}
+
+@Preview
+@Composable
+private fun AddressScreenPreview() {
+    RangoTheme(darkTheme = false) {
+        AddressScreen(addresses = SampleAddresses, selectedIndex = 0, onSelect = {}, onSaveAddress = {}, onBack = {})
+    }
+}
+
+@Preview
+@Composable
+private fun AddressScreenDarkPreview() {
+    RangoTheme(darkTheme = true) {
+        AddressScreen(addresses = SampleAddresses, selectedIndex = 1, onSelect = {}, onSaveAddress = {}, onBack = {})
     }
 }

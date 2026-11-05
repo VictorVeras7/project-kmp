@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
@@ -36,11 +37,14 @@ import org.example.project.data.DeliveryAddress
 import org.example.project.data.PaymentMethod
 import org.example.project.data.Product
 import org.example.project.data.SampleAddons
+import org.example.project.data.SampleAddresses
 import org.example.project.data.SampleProducts
+import org.example.project.data.add
 import org.example.project.data.formatMoney
 import org.example.project.data.totals
 import org.example.project.ui.theme.RangoColors
 import org.example.project.ui.theme.RangoIcons
+import org.example.project.ui.theme.RangoTheme
 
 // Tempo simulado de processamento do pagamento, como no protótipo.
 private const val ConfirmDelayMs = 1300L
@@ -216,5 +220,43 @@ private fun SummaryRow(label: String, value: String, valueColor: Color) {
     ) {
         Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
         Text(value, color = valueColor, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+    }
+}
+
+private val PreviewCart = emptyList<CartItem>()
+    .add(SampleProducts[0], 1, setOf("a1"))
+    .add(SampleProducts[11], 2)
+
+@Preview
+@Composable
+private fun CheckoutScreenPreview() {
+    RangoTheme(darkTheme = false) {
+        CheckoutScreen(
+            items = PreviewCart,
+            couponApplied = true,
+            address = SampleAddresses.first(),
+            payment = PaymentMethod.Pix,
+            onBack = {},
+            onChangeAddress = {},
+            onChangePayment = {},
+            onOrderConfirmed = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun CheckoutScreenDarkPreview() {
+    RangoTheme(darkTheme = true) {
+        CheckoutScreen(
+            items = PreviewCart,
+            couponApplied = false,
+            address = SampleAddresses[1],
+            payment = PaymentMethod.Credit,
+            onBack = {},
+            onChangeAddress = {},
+            onChangePayment = {},
+            onOrderConfirmed = {},
+        )
     }
 }
