@@ -62,6 +62,25 @@ object RangoIcons {
         "M20 21a1 1 0 1 1-2 0 1 1 0 0 1 2 0z",
         "M2 2h2l2.7 12.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L22 7H5.1",
     )
+    val CartOff = icon(
+        "cart_off", false,
+        "M9 21a1 1 0 1 1-2 0 1 1 0 0 1 2 0z",
+        "M20 21a1 1 0 1 1-2 0 1 1 0 0 1 2 0z",
+        "M2 2h2l2.7 12.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L22 7H5.1",
+        "M3 3l18 18",
+    )
+    val Trash = icon(
+        "trash", false,
+        "M3 6h18",
+        "M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6",
+        "M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2",
+    )
+    val Ticket = icon(
+        "ticket", false,
+        "M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z",
+        "M13 5v2", "M13 11v2", "M13 17v2",
+    )
+    val Check = icon("check", false, "M20 6L9 17l-5-5")
     val ChevronDown = icon("chevron_down", false, "M6 9l6 6 6-6")
     val Star = icon(
         "star", true,
