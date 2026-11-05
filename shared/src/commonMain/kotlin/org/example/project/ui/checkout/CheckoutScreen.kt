@@ -9,10 +9,17 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -21,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
 import org.example.project.data.Addon
 import org.example.project.data.CartItem
 import org.example.project.data.CouponCode
@@ -33,6 +41,9 @@ import org.example.project.data.formatMoney
 import org.example.project.data.totals
 import org.example.project.ui.theme.RangoColors
 import org.example.project.ui.theme.RangoIcons
+
+// Tempo simulado de processamento do pagamento, como no protótipo.
+private const val ConfirmDelayMs = 1300L
 
 @Composable
 fun CheckoutScreen(
@@ -49,12 +60,39 @@ fun CheckoutScreen(
     addons: List<Addon> = SampleAddons,
 ) {
     val totals = items.totals(couponApplied)
+    var processing by remember { mutableStateOf(false) }
+    val confirm by rememberUpdatedState(onOrderConfirmed)
+
+    LaunchedEffect(processing) {
+        if (processing) {
+            delay(ConfirmDelayMs)
+            confirm()
+        }
+    }
 
     CheckoutScaffold(
         title = "Finalizar pedido",
-        onBack = onBack,
+        onBack = { if (!processing) onBack() },
         modifier = modifier,
-        bottomBar = { PrimaryButton("Confirmar pedido", onClick = onOrderConfirmed) },
+        bottomBar = {
+            PrimaryButton(
+                text = if (processing) "Processando pagamento..." else "Confirmar pedido",
+                onClick = { processing = true },
+                enabled = !processing,
+                leading = if (processing) {
+                    {
+                        CircularProgressIndicator(
+                            color = Color.White,
+                            trackColor = Color.White.copy(alpha = 0.35f),
+                            strokeWidth = 2.5.dp,
+                            modifier = Modifier.size(19.dp),
+                        )
+                    }
+                } else {
+                    null
+                },
+            )
+        },
     ) {
         CheckoutCard {
             CardTitleRow(RangoIcons.Pin, "Endereço de entrega", onChange = onChangeAddress)
