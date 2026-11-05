@@ -11,10 +11,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,9 +30,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.example.project.data.DeliveryAddress
+import org.example.project.data.newAddress
 import org.example.project.ui.theme.RangoColors
 import org.example.project.ui.theme.RangoIcons
 
@@ -37,9 +45,12 @@ fun AddressScreen(
     addresses: List<DeliveryAddress>,
     selectedIndex: Int,
     onSelect: (Int) -> Unit,
+    onSaveAddress: (DeliveryAddress) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var showForm by remember { mutableStateOf(false) }
+
     CheckoutScaffold(
         title = "Endereço de entrega",
         onBack = onBack,
@@ -69,7 +80,15 @@ fun AddressScreen(
                 )
             }
         }
-        AddAddressButton(onClick = {})
+        if (showForm) {
+            NewAddressForm(
+                onSave = { address ->
+                    onSaveAddress(address)
+                    showForm = false
+                },
+            )
+        }
+        AddAddressButton(onClick = { showForm = !showForm })
     }
 }
 
@@ -93,6 +112,46 @@ private fun MapPlaceholder() {
                 .background(Color.White.copy(alpha = 0.8f), RoundedCornerShape(6.dp))
                 .padding(horizontal = 7.dp, vertical = 3.dp),
         )
+    }
+}
+
+@Composable
+private fun NewAddressForm(onSave: (DeliveryAddress) -> Unit) {
+    var cep by remember { mutableStateOf("") }
+    var street by remember { mutableStateOf("") }
+    var complement by remember { mutableStateOf("") }
+    var district by remember { mutableStateOf("") }
+    // Só marca os campos obrigatórios depois de tentar salvar.
+    var tried by remember { mutableStateOf(false) }
+
+    CheckoutCard(highlighted = true) {
+        Text("Novo endereço", color = MaterialTheme.colorScheme.onSurface, fontSize = 13.5.sp, fontWeight = FontWeight.ExtraBold)
+        FormField(cep, { cep = it }, "CEP", keyboardType = KeyboardType.Number)
+        FormField(street, { street = it }, "Rua e número", error = tried && street.isBlank())
+        FormField(complement, { complement = it }, "Complemento")
+        FormField(district, { district = it }, "Bairro e cidade", error = tried && district.isBlank())
+        if (tried && (street.isBlank() || district.isBlank())) {
+            Text(
+                "Preencha a rua e o bairro.",
+                color = RangoColors.Error,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+        Button(
+            onClick = {
+                tried = true
+                newAddress(street, complement, district)?.let(onSave)
+            },
+            modifier = Modifier.fillMaxWidth().height(48.dp),
+            shape = RoundedCornerShape(15.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+            ),
+        ) {
+            Text("Salvar endereço", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+        }
     }
 }
 
