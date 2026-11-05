@@ -22,6 +22,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -30,6 +32,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
@@ -39,6 +43,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.example.project.data.PaymentMethod
 import org.example.project.ui.theme.RangoColors
 import org.example.project.ui.theme.RangoIcons
 
@@ -117,6 +122,61 @@ internal fun Divider() {
     Box(Modifier.fillMaxWidth().height(1.dp).background(MaterialTheme.colorScheme.outline))
 }
 
+@Composable
+internal fun PrimaryButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    leading: (@Composable () -> Unit)? = null,
+) {
+    val shape = RoundedCornerShape(17.dp)
+    Button(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = modifier
+            .fillMaxWidth()
+            .height(54.dp)
+            .shadow(10.dp, shape, ambientColor = RangoColors.Primary, spotColor = RangoColors.Primary),
+        shape = shape,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary,
+            disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.85f),
+            disabledContentColor = MaterialTheme.colorScheme.onPrimary,
+        ),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+            leading?.invoke()
+            Text(text, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+// Card branco com borda, usado nos blocos do checkout.
+@Composable
+internal fun CheckoutCard(
+    modifier: Modifier = Modifier,
+    spacing: Dp = 11.dp,
+    highlighted: Boolean = false,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    val shape = RoundedCornerShape(20.dp)
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surface, shape)
+            .border(
+                if (highlighted) 1.5.dp else 1.dp,
+                if (highlighted) RangoColors.Primary else MaterialTheme.colorScheme.outline,
+                shape,
+            )
+            .padding(15.dp),
+        verticalArrangement = Arrangement.spacedBy(spacing),
+        content = content,
+    )
+}
+
 // Linha selecionável (endereço ou pagamento) com fundo laranja suave quando marcada.
 @Composable
 internal fun SelectableRow(
@@ -149,6 +209,19 @@ internal fun RadioDot(selected: Boolean) {
         contentAlignment = Alignment.Center,
     ) {
         if (selected) Box(Modifier.size(11.dp).background(RangoColors.Primary, CircleShape))
+    }
+}
+
+// Ícone laranja sobre fundo laranja suave (pagamento).
+@Composable
+internal fun SoftIcon(icon: ImageVector, size: Dp = 40.dp, iconSize: Dp = 21.dp) {
+    Box(
+        modifier = Modifier
+            .size(size)
+            .background(RangoColors.Primary.copy(alpha = 0.1f), RoundedCornerShape(size / 3)),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(icon, contentDescription = null, tint = RangoColors.Primary, modifier = Modifier.size(iconSize))
     }
 }
 
@@ -204,3 +277,11 @@ internal fun FormField(
         )
     }
 }
+
+internal val PaymentMethod.icon: ImageVector
+    get() = when (this) {
+        PaymentMethod.Pix -> RangoIcons.QrCode
+        PaymentMethod.Credit -> RangoIcons.CreditCard
+        PaymentMethod.Debit -> RangoIcons.DebitCard
+        PaymentMethod.Cash -> RangoIcons.Cash
+    }
