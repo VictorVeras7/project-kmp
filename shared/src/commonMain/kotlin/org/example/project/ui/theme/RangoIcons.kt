@@ -81,6 +81,47 @@ object RangoIcons {
         "M13 5v2", "M13 11v2", "M13 17v2",
     )
     val Check = icon("check", false, "M20 6L9 17l-5-5")
+    val Wallet = icon(
+        "wallet", false,
+        "M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1",
+        "M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4",
+    )
+    val QrCode = icon(
+        "qr_code", false,
+        "M3 3h5v5H3z", "M16 3h5v5h-5z", "M3 16h5v5H3z",
+        "M21 16h-3a2 2 0 0 0-2 2v3", "M21 21v.01", "M12 7v3a2 2 0 0 1-2 2H7",
+        "M3 12h.01", "M12 3h.01", "M12 16v.01", "M16 12h1", "M21 12v.01", "M12 21v-1",
+    )
+    private const val CardPath = "M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"
+    val CreditCard = icon("credit_card", false, CardPath, "M2 10h20")
+    val DebitCard = icon("debit_card", false, CardPath, "M2 10h20", "M6 15h4")
+    val Cash = icon(
+        "cash", false,
+        "M4 6h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z",
+        "M14 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0z",
+        "M6 12h.01", "M18 12h.01",
+    )
+    val Edit = icon("edit", false, "M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z", "M15 5l4 4")
+    val PinPlus = icon(
+        "pin_plus", false,
+        "M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0z",
+        "M12 7v6", "M9 10h6",
+    )
+    val Lock = icon(
+        "lock", false,
+        "M5 11h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2z",
+        "M7 11V7a5 5 0 0 1 10 0v4",
+    )
+    val User = icon(
+        "user", false,
+        "M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2",
+        "M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0z",
+    )
+    val Calendar = icon(
+        "calendar", false,
+        "M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z",
+        "M16 2v4", "M8 2v4", "M3 10h18",
+    )
     val ChevronDown = icon("chevron_down", false, "M6 9l6 6 6-6")
     val Star = icon(
         "star", true,
