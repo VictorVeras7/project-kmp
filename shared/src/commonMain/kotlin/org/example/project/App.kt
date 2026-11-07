@@ -8,6 +8,8 @@ import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.tooling.preview.Preview
 import org.example.project.data.CartItem
+import org.example.project.data.PaymentMethod
+import org.example.project.data.SampleAddresses
 import org.example.project.data.SampleProducts
 import org.example.project.data.add
 import org.example.project.data.changeQuantity
@@ -15,6 +17,9 @@ import org.example.project.data.isValidCoupon
 import org.example.project.data.itemCount
 import org.example.project.data.remove
 import org.example.project.ui.cart.CartScreen
+import org.example.project.ui.checkout.AddressScreen
+import org.example.project.ui.checkout.CheckoutScreen
+import org.example.project.ui.checkout.PaymentScreen
 import org.example.project.ui.home.HomeScreen
 import org.example.project.ui.login.LoginScreen
 import org.example.project.ui.product.ProductDetailScreen
@@ -22,7 +27,7 @@ import org.example.project.ui.signup.SignupScreen
 import org.example.project.ui.theme.RangoTheme
 import org.example.project.ui.welcome.WelcomeScreen
 
-private enum class Screen { Welcome, Login, Signup, Home, ProductDetail, Cart }
+private enum class Screen { Welcome, Login, Signup, Home, ProductDetail, Cart, Checkout, Address, Payment }
 
 @Composable
 @Preview
@@ -35,6 +40,10 @@ fun App() {
     var cartItems by remember { mutableStateOf(listOf<CartItem>()) }
     var coupon by remember { mutableStateOf("") }
     var couponApplied by remember { mutableStateOf(false) }
+    // Endereço e pagamento escolhidos no checkout.
+    var addresses by remember { mutableStateOf(SampleAddresses) }
+    var addressIndex by remember { mutableStateOf(0) }
+    var payment by remember { mutableStateOf(PaymentMethod.Pix) }
     var favoriteIds by remember { mutableStateOf(setOf<String>()) }
     // Mantém o estado da Home (categoria e scroll) ao abrir e voltar do produto.
     val stateHolder = rememberSaveableStateHolder()
@@ -71,7 +80,7 @@ fun App() {
                 )
                 Screen.Home -> HomeScreen(
                     userName = "Marina Alves",
-                    address = "Rua das Palmeiras, 128",
+                    address = addresses[addressIndex].short,
                     cartCount = cartItems.itemCount(),
                     favoriteIds = favoriteIds,
                     onToggleFavorite = ::toggleFavorite,
@@ -112,8 +121,39 @@ fun App() {
                         couponApplied = false
                     },
                     onApplyCoupon = { couponApplied = isValidCoupon(coupon) },
-                    onCheckout = {},
+                    onCheckout = { screen = Screen.Checkout },
                     onExplore = { screen = Screen.Home },
+                )
+                Screen.Checkout -> CheckoutScreen(
+                    items = cartItems,
+                    couponApplied = couponApplied,
+                    address = addresses[addressIndex],
+                    payment = payment,
+                    onBack = { screen = Screen.Cart },
+                    onChangeAddress = { screen = Screen.Address },
+                    onChangePayment = { screen = Screen.Payment },
+                    onOrderConfirmed = {
+                        // Pedido criado: esvazia o carrinho. A tela de pedido realizado vem na próxima feature.
+                        cartItems = emptyList()
+                        coupon = ""
+                        couponApplied = false
+                        screen = Screen.Home
+                    },
+                )
+                Screen.Address -> AddressScreen(
+                    addresses = addresses,
+                    selectedIndex = addressIndex,
+                    onSelect = { addressIndex = it },
+                    onSaveAddress = { address ->
+                        addresses = addresses + address
+                        addressIndex = addresses.lastIndex
+                    },
+                    onBack = { screen = Screen.Checkout },
+                )
+                Screen.Payment -> PaymentScreen(
+                    selected = payment,
+                    onSelect = { payment = it },
+                    onBack = { screen = Screen.Checkout },
                 )
             }
         }
