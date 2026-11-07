@@ -4,9 +4,11 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.keyframes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -32,11 +34,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.example.project.data.Order
+import org.example.project.data.OrderEta
+import org.example.project.data.formatMoney
+import org.example.project.ui.checkout.Divider
 import org.example.project.ui.checkout.PrimaryButton
 import org.example.project.ui.theme.RangoColors
 import org.example.project.ui.theme.RangoIcons
@@ -81,6 +87,7 @@ fun OrderPlacedScreen(
                     fontWeight = FontWeight.Medium,
                     textAlign = TextAlign.Center,
                 )
+                OrderSummary(order, modifier = Modifier.padding(top = 22.dp))
             }
             Column(
                 modifier = Modifier.padding(top = 16.dp),
@@ -140,5 +147,55 @@ private fun SuccessBadge(modifier: Modifier = Modifier) {
         ) {
             Icon(RangoIcons.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(28.dp))
         }
+    }
+}
+
+@Composable
+private fun OrderSummary(order: Order, modifier: Modifier = Modifier) {
+    val shape = RoundedCornerShape(20.dp)
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surfaceVariant, shape)
+            .border(1.dp, MaterialTheme.colorScheme.outline, shape)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        InfoRow("Número do pedido") {
+            Text(
+                order.id,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
+                fontFamily = FontFamily.Monospace,
+            )
+        }
+        InfoRow("Previsão de entrega") {
+            Text(OrderEta, color = RangoColors.Primary, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold)
+        }
+        InfoRow("Pagamento") {
+            Text(order.payment.label, color = MaterialTheme.colorScheme.onSurface, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+        }
+        Divider()
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(order.itemsLabel, color = MaterialTheme.colorScheme.onSurface, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold)
+            Text(formatMoney(order.total), color = RangoColors.Primary, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
+        }
+    }
+}
+
+@Composable
+private fun InfoRow(label: String, value: @Composable () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+        value()
     }
 }
