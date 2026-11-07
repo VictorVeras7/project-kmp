@@ -37,15 +37,24 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.example.project.data.CartItem
 import org.example.project.data.Order
 import org.example.project.data.OrderEta
+import org.example.project.data.PaymentMethod
+import org.example.project.data.SampleAddresses
+import org.example.project.data.SampleProducts
+import org.example.project.data.add
 import org.example.project.data.formatMoney
+import org.example.project.data.orderId
+import org.example.project.data.totals
 import org.example.project.ui.checkout.Divider
 import org.example.project.ui.checkout.PrimaryButton
 import org.example.project.ui.theme.RangoColors
 import org.example.project.ui.theme.RangoIcons
+import org.example.project.ui.theme.RangoTheme
 
 @Composable
 fun OrderPlacedScreen(
@@ -197,5 +206,33 @@ private fun InfoRow(label: String, value: @Composable () -> Unit) {
     ) {
         Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
         value()
+    }
+}
+
+private val PreviewItems = emptyList<CartItem>()
+    .add(SampleProducts[0], 1, setOf("a1"))
+    .add(SampleProducts[11], 2)
+
+private val PreviewOrder = Order(
+    id = orderId(0),
+    items = PreviewItems,
+    total = PreviewItems.totals(couponApplied = true).total,
+    address = SampleAddresses.first(),
+    payment = PaymentMethod.Pix,
+)
+
+@Preview
+@Composable
+private fun OrderPlacedScreenPreview() {
+    RangoTheme(darkTheme = false) {
+        OrderPlacedScreen(order = PreviewOrder, onTrackOrder = {}, onBackHome = {})
+    }
+}
+
+@Preview
+@Composable
+private fun OrderPlacedScreenDarkPreview() {
+    RangoTheme(darkTheme = true) {
+        OrderPlacedScreen(order = PreviewOrder.copy(payment = PaymentMethod.Credit), onTrackOrder = {}, onBackHome = {})
     }
 }
