@@ -293,6 +293,40 @@ internal fun FormField(
     }
 }
 
+// Mapa ilustrativo (endereço e acompanhamento): fundo verde e etiqueta no canto.
+@Composable
+internal fun MapPlaceholder(
+    label: String,
+    height: Dp,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    val shape = RoundedCornerShape(if (height > 140.dp) 22.dp else 20.dp)
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(height)
+            .clip(shape)
+            .background(MapColor),
+        contentAlignment = Alignment.Center,
+    ) {
+        content()
+        Text(
+            label,
+            color = Color.Black.copy(alpha = 0.5f),
+            fontSize = 9.5.sp,
+            fontFamily = FontFamily.Monospace,
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(start = 12.dp, bottom = 10.dp)
+                .background(Color.White.copy(alpha = 0.8f), RoundedCornerShape(6.dp))
+                .padding(horizontal = 7.dp, vertical = 3.dp),
+        )
+    }
+}
+
+private val MapColor = Color(0xFFCFE3D8)
+
 internal val PaymentMethod.icon: ImageVector
     get() = when (this) {
         PaymentMethod.Pix -> RangoIcons.QrCode
