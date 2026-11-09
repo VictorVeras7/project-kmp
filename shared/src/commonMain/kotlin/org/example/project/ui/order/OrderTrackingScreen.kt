@@ -30,6 +30,7 @@ import kotlinx.coroutines.delay
 import org.example.project.data.Order
 import org.example.project.data.OrderStep
 import org.example.project.data.TrackingIntervalMs
+import org.example.project.ui.checkout.CheckoutCard
 import org.example.project.ui.checkout.CheckoutScaffold
 import org.example.project.ui.checkout.MapPlaceholder
 import org.example.project.ui.checkout.SoftIcon
@@ -70,6 +71,7 @@ fun OrderTrackingScreen(
             }
         }
         StatusCard(order)
+        Timeline(order.step)
     }
 }
 
@@ -95,6 +97,52 @@ private fun StatusCard(order: Order) {
     }
 }
 
+@Composable
+private fun Timeline(current: OrderStep) {
+    CheckoutCard(spacing = 0.dp) {
+        OrderStep.entries.forEach { step ->
+            TimelineRow(
+                step = step,
+                done = step < current,
+                isCurrent = step == current,
+                hasLine = step != OrderStep.entries.last(),
+            )
+        }
+    }
+}
+
+@Composable
+private fun TimelineRow(step: OrderStep, done: Boolean, isCurrent: Boolean, hasLine: Boolean) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(13.dp),
+    ) {
+        Column(
+            modifier = Modifier.weight(1f).padding(bottom = if (hasLine) 16.dp else 0.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            Text(
+                step.label,
+                color = when {
+                    isCurrent -> RangoColors.Primary
+                    done -> MaterialTheme.colorScheme.onSurface
+                    else -> MaterialTheme.colorScheme.onSurfaceVariant
+                },
+                fontSize = 14.sp,
+                fontWeight = if (isCurrent) FontWeight.ExtraBold else FontWeight.Bold,
+            )
+            Text(
+                when {
+                    done -> step.time
+                    isCurrent -> "agora"
+                    else -> "previsto"
+                },
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 11.5.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+    }
+}
 
 private val OrderStep.icon: ImageVector
     get() = when (this) {
