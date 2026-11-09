@@ -2,6 +2,7 @@ package org.example.project.ui.order
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,6 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -40,6 +42,8 @@ import org.example.project.ui.checkout.MapPlaceholder
 import org.example.project.ui.checkout.SoftIcon
 import org.example.project.ui.theme.RangoColors
 import org.example.project.ui.theme.RangoIcons
+
+private val CourierAvatarColor = Color(0x8CA9C4EC)
 
 @Composable
 fun OrderTrackingScreen(
@@ -76,6 +80,7 @@ fun OrderTrackingScreen(
         }
         StatusCard(order)
         Timeline(order.step)
+        CourierCard()
     }
 }
 
@@ -178,6 +183,55 @@ private fun TimelineRow(step: OrderStep, done: Boolean, isCurrent: Boolean, hasL
                 fontWeight = FontWeight.SemiBold,
             )
         }
+    }
+}
+
+// Dados fixos do entregador, como no protótipo. Os botões ainda não têm ação.
+@Composable
+private fun CourierCard() {
+    val shape = RoundedCornerShape(20.dp)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surface, shape)
+            .border(1.dp, MaterialTheme.colorScheme.outline, shape)
+            .padding(15.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(13.dp),
+    ) {
+        Box(Modifier.size(44.dp).background(CourierAvatarColor, CircleShape))
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+            Text("Rafael Souza", color = MaterialTheme.colorScheme.onSurface, fontSize = 13.5.sp, fontWeight = FontWeight.Bold)
+            Text(
+                "Entregador · Honda CG 160",
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 11.5.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+        CourierButton(RangoIcons.Chat, "Mensagem", filled = false)
+        CourierButton(RangoIcons.Phone, "Ligar", filled = true)
+    }
+}
+
+@Composable
+private fun CourierButton(icon: ImageVector, description: String, filled: Boolean) {
+    val shape = RoundedCornerShape(13.dp)
+    Box(
+        modifier = Modifier
+            .size(40.dp)
+            .clip(shape)
+            .background(if (filled) RangoColors.Primary else MaterialTheme.colorScheme.surface, shape)
+            .then(if (filled) Modifier else Modifier.border(1.dp, MaterialTheme.colorScheme.outline, shape))
+            .clickable {},
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            icon,
+            contentDescription = description,
+            tint = if (filled) Color.White else RangoColors.Primary,
+            modifier = Modifier.size(20.dp),
+        )
     }
 }
 
