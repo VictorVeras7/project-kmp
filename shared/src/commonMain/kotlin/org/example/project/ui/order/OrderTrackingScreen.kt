@@ -1,5 +1,10 @@
 package org.example.project.ui.order
 
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -26,6 +31,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -72,6 +78,7 @@ fun OrderTrackingScreen(
             Box(
                 modifier = Modifier
                     .size(52.dp)
+                    .pulseRing()
                     .background(RangoColors.Primary, CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
@@ -135,6 +142,7 @@ private fun TimelineRow(step: OrderStep, done: Boolean, isCurrent: Boolean, hasL
             Box(
                 modifier = Modifier
                     .size(26.dp)
+                    .then(if (isCurrent) Modifier.pulseRing() else Modifier)
                     .background(dotColor, CircleShape)
                     .then(
                         if (done || isCurrent) Modifier else Modifier.border(1.5.dp, MaterialTheme.colorScheme.outline, CircleShape),
@@ -231,6 +239,24 @@ private fun CourierButton(icon: ImageVector, description: String, filled: Boolea
             contentDescription = description,
             tint = if (filled) Color.White else RangoColors.Primary,
             modifier = Modifier.size(20.dp),
+        )
+    }
+}
+
+// Anel laranja que se expande e some, igual à animação "ring" do protótipo.
+@Composable
+private fun Modifier.pulseRing(): Modifier {
+    val transition = rememberInfiniteTransition(label = "ring")
+    val progress by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(1900, easing = LinearOutSlowInEasing)),
+        label = "ringProgress",
+    )
+    return drawBehind {
+        drawCircle(
+            color = RangoColors.Primary.copy(alpha = 0.4f * (1f - progress)),
+            radius = size.minDimension / 2 + 16.dp.toPx() * progress,
         )
     }
 }
