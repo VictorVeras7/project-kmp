@@ -32,7 +32,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -293,7 +295,7 @@ internal fun FormField(
     }
 }
 
-// Mapa ilustrativo (endereço e acompanhamento): fundo verde e etiqueta no canto.
+// Mapa ilustrativo (endereço e acompanhamento): fundo verde com listras e etiqueta no canto.
 @Composable
 internal fun MapPlaceholder(
     label: String,
@@ -307,7 +309,22 @@ internal fun MapPlaceholder(
             .fillMaxWidth()
             .height(height)
             .clip(shape)
-            .background(MapColor),
+            .background(MapColor)
+            .drawBehind {
+                // Listras diagonais de 10dp, como o repeating-linear-gradient do protótipo.
+                val step = 20.dp.toPx()
+                val stripe = 10.dp.toPx()
+                var x = -size.height
+                while (x < size.width) {
+                    drawLine(
+                        color = Color.Black.copy(alpha = 0.05f),
+                        start = Offset(x, size.height),
+                        end = Offset(x + size.height, 0f),
+                        strokeWidth = stripe,
+                    )
+                    x += step * 1.414f
+                }
+            },
         contentAlignment = Alignment.Center,
     ) {
         content()
