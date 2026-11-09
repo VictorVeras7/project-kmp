@@ -37,6 +37,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -52,8 +53,9 @@ import org.example.project.ui.theme.RangoIcons
 internal fun CheckoutScaffold(
     title: String,
     onBack: () -> Unit,
-    bottomBar: @Composable () -> Unit,
+    bottomBar: (@Composable () -> Unit)?,
     modifier: Modifier = Modifier,
+    subtitle: String? = null,
     contentSpacing: Dp = 14.dp,
     content: @Composable ColumnScope.() -> Unit,
 ) {
@@ -65,7 +67,7 @@ internal fun CheckoutScaffold(
                 .windowInsetsPadding(WindowInsets.safeDrawing)
                 .background(MaterialTheme.colorScheme.surfaceVariant),
         ) {
-            CheckoutHeader(title, onBack)
+            CheckoutHeader(title, subtitle, onBack)
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -74,10 +76,12 @@ internal fun CheckoutScaffold(
                 verticalArrangement = Arrangement.spacedBy(contentSpacing),
                 content = content,
             )
-            Column(modifier = Modifier.background(MaterialTheme.colorScheme.surface)) {
-                Divider()
-                Box(modifier = Modifier.padding(start = 18.dp, end = 18.dp, top = 12.dp, bottom = 20.dp)) {
-                    bottomBar()
+            if (bottomBar != null) {
+                Column(modifier = Modifier.background(MaterialTheme.colorScheme.surface)) {
+                    Divider()
+                    Box(modifier = Modifier.padding(start = 18.dp, end = 18.dp, top = 12.dp, bottom = 20.dp)) {
+                        bottomBar()
+                    }
                 }
             }
         }
@@ -85,7 +89,7 @@ internal fun CheckoutScaffold(
 }
 
 @Composable
-private fun CheckoutHeader(title: String, onBack: () -> Unit) {
+private fun CheckoutHeader(title: String, subtitle: String?, onBack: () -> Unit) {
     Column(modifier = Modifier.background(MaterialTheme.colorScheme.surface)) {
         Row(
             modifier = Modifier
@@ -111,7 +115,18 @@ private fun CheckoutHeader(title: String, onBack: () -> Unit) {
                     modifier = Modifier.size(21.dp),
                 )
             }
-            Text(title, color = MaterialTheme.colorScheme.onSurface, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
+            Column {
+                Text(title, color = MaterialTheme.colorScheme.onSurface, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
+                if (subtitle != null) {
+                    Text(
+                        subtitle,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        fontFamily = FontFamily.Monospace,
+                    )
+                }
+            }
         }
         Divider()
     }
