@@ -36,18 +36,23 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import org.example.project.data.Order
 import org.example.project.data.OrderStep
+import org.example.project.data.PaymentMethod
+import org.example.project.data.SampleAddresses
 import org.example.project.data.TrackingIntervalMs
+import org.example.project.data.orderId
 import org.example.project.ui.checkout.CheckoutCard
 import org.example.project.ui.checkout.CheckoutScaffold
 import org.example.project.ui.checkout.MapPlaceholder
 import org.example.project.ui.checkout.SoftIcon
 import org.example.project.ui.theme.RangoColors
 import org.example.project.ui.theme.RangoIcons
+import org.example.project.ui.theme.RangoTheme
 
 private val CourierAvatarColor = Color(0x8CA9C4EC)
 
@@ -269,3 +274,27 @@ private val OrderStep.icon: ImageVector
         OrderStep.OnTheWay -> RangoIcons.Bike
         OrderStep.Delivered -> RangoIcons.Home
     }
+
+private val PreviewOrder = Order(
+    id = orderId(0),
+    items = emptyList(),
+    total = 0.0,
+    address = SampleAddresses.first(),
+    payment = PaymentMethod.Pix,
+)
+
+@Preview
+@Composable
+private fun OrderTrackingScreenPreview() {
+    RangoTheme(darkTheme = false) {
+        OrderTrackingScreen(order = PreviewOrder.copy(step = OrderStep.Preparing), onAdvance = {}, onBack = {})
+    }
+}
+
+@Preview
+@Composable
+private fun OrderTrackingScreenDarkPreview() {
+    RangoTheme(darkTheme = true) {
+        OrderTrackingScreen(order = PreviewOrder.copy(step = OrderStep.OnTheWay), onAdvance = {}, onBack = {})
+    }
+}
