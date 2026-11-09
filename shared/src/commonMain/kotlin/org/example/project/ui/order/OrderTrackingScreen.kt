@@ -5,10 +5,14 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -114,8 +118,41 @@ private fun Timeline(current: OrderStep) {
 @Composable
 private fun TimelineRow(step: OrderStep, done: Boolean, isCurrent: Boolean, hasLine: Boolean) {
     Row(
+        modifier = Modifier.height(IntrinsicSize.Min),
         horizontalArrangement = Arrangement.spacedBy(13.dp),
     ) {
+        Column(modifier = Modifier.width(26.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            val dotColor = when {
+                done -> RangoColors.Success
+                isCurrent -> RangoColors.Primary
+                else -> MaterialTheme.colorScheme.surfaceVariant
+            }
+            Box(
+                modifier = Modifier
+                    .size(26.dp)
+                    .background(dotColor, CircleShape)
+                    .then(
+                        if (done || isCurrent) Modifier else Modifier.border(1.5.dp, MaterialTheme.colorScheme.outline, CircleShape),
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    if (done) RangoIcons.Check else step.icon,
+                    contentDescription = null,
+                    tint = if (done || isCurrent) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(15.dp),
+                )
+            }
+            if (hasLine) {
+                Box(
+                    modifier = Modifier
+                        .width(2.dp)
+                        .weight(1f)
+                        .heightIn(min = 26.dp)
+                        .background(if (done) RangoColors.Success else MaterialTheme.colorScheme.outline),
+                )
+            }
+        }
         Column(
             modifier = Modifier.weight(1f).padding(bottom = if (hasLine) 16.dp else 0.dp),
             verticalArrangement = Arrangement.spacedBy(2.dp),
