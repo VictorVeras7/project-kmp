@@ -9,9 +9,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
@@ -62,24 +64,27 @@ internal fun CheckoutScaffold(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     // Fundo branco atrás da barra de status, igual ao cabeçalho; conteúdo em cinza claro.
+    // A margem inferior do sistema fica na barra de baixo ou, sem ela, no próprio conteúdo cinza.
+    val bottomInset = WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom)
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.safeDrawing)
-                .background(MaterialTheme.colorScheme.surfaceVariant),
+                .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)),
         ) {
             CheckoutHeader(title, subtitle, onBack)
             Column(
                 modifier = Modifier
                     .weight(1f)
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .then(if (bottomBar == null) Modifier.windowInsetsPadding(bottomInset) else Modifier)
                     .verticalScroll(rememberScrollState())
                     .padding(start = 18.dp, end = 18.dp, top = 16.dp, bottom = 20.dp),
                 verticalArrangement = Arrangement.spacedBy(contentSpacing),
                 content = content,
             )
             if (bottomBar != null) {
-                Column(modifier = Modifier.background(MaterialTheme.colorScheme.surface)) {
+                Column(modifier = Modifier.background(MaterialTheme.colorScheme.surface).windowInsetsPadding(bottomInset)) {
                     Divider()
                     Box(modifier = Modifier.padding(start = 18.dp, end = 18.dp, top = 12.dp, bottom = 20.dp)) {
                         bottomBar()
