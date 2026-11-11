@@ -1,5 +1,7 @@
 package org.example.project.data.remote
 
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import org.example.project.data.Addon
 import org.example.project.data.Cart
 import org.example.project.data.CartItem
@@ -12,6 +14,7 @@ import org.example.project.data.PaymentMethod
 import org.example.project.data.PaymentOption
 import org.example.project.data.Product
 import org.example.project.data.ProductTag
+import kotlin.time.Instant
 
 // Converte as respostas da API nos modelos usados pelas telas.
 
@@ -93,3 +96,9 @@ fun OrderDto.toOrder(): Order {
         courier = courier?.let { Courier(it.name, it.vehicle) },
     )
 }
+
+// "2026-09-21T19:42:00.000Z" -> "16:42" no fuso do aparelho.
+private fun localTime(iso: String): String? = runCatching {
+    val time = Instant.parse(iso).toLocalDateTime(TimeZone.currentSystemDefault())
+    "${time.hour.toString().padStart(2, '0')}:${time.minute.toString().padStart(2, '0')}"
+}.getOrNull()
