@@ -43,7 +43,6 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.example.project.ui.components.AuthField
 import org.example.project.ui.components.BackButton
@@ -52,12 +51,19 @@ import org.example.project.ui.theme.RangoTheme
 
 private val EmailPattern = Regex("^[^@\\s]+@[^@\\s]+\\.[a-z]{2,}$", RegexOption.IGNORE_CASE)
 
-private enum class SignupField { Name, Email, Phone, Password, ConfirmPassword }
+private enum class SignupField(val apiField: String) {
+    Name("name"), Email("email"), Phone("phone"), Password("password"), ConfirmPassword("passwordConfirmation"),
+}
+
+// Dados do cadastro enviados ao servidor.
+data class SignupData(val name: String, val email: String, val phone: String, val password: String, val confirmPassword: String)
 
 @Composable
 fun SignupScreen(
     onBack: () -> Unit,
-    onSignupSuccess: (name: String, email: String, phone: String) -> Unit,
+    // Cria a conta no servidor. Devolve os erros por campo da API; vazio = sucesso.
+    register: suspend (SignupData) -> Map<String, String>,
+    onSignupSuccess: () -> Unit,
     onLogin: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -70,6 +76,8 @@ fun SignupScreen(
     var touched by remember { mutableStateOf(false) }
     var termsError by remember { mutableStateOf(false) }
     var loading by remember { mutableStateOf(false) }
+    // Erros devolvidos pelo servidor (ex.: e-mail já cadastrado), mostrados até o próximo envio.
+    var serverErrors by remember { mutableStateOf(mapOf<SignupField, String>()) }
     val scope = rememberCoroutineScope()
 
     fun validate(): Map<SignupField, String> = buildMap {
@@ -82,19 +90,26 @@ fun SignupScreen(
         }
     }
 
-    val errors = if (touched) validate() else emptyMap()
+    val errors = (if (touched) validate() else emptyMap()) + serverErrors
 
     fun submit() {
         if (loading) return
         touched = true
         termsError = !acceptedTerms
+        serverErrors = emptyMap()
         if (validate().isNotEmpty() || !acceptedTerms) return
 
         scope.launch {
             loading = true
-            delay(1100)
+            val result = register(SignupData(name.trim(), email.trim(), phone, password, confirmPassword))
             loading = false
-            onSignupSuccess(name.trim(), email, phone)
+            if (result.isEmpty()) {
+                onSignupSuccess()
+            } else {
+                serverErrors = SignupField.entries
+                    .mapNotNull { field -> result[field.apiField]?.let { field to it } }
+                    .toMap()
+            }
         }
     }
 
@@ -273,7 +288,7 @@ private fun TermsRow(checked: Boolean, error: Boolean, onToggle: () -> Unit) {
 @Composable
 private fun SignupScreenPreview() {
     RangoTheme(darkTheme = false) {
-        SignupScreen(onBack = {}, onSignupSuccess = { _, _, _ -> }, onLogin = {})
+        SignupScreen(onBack = {}, register = { emptyMap() }, onSignupSuccess = {}, onLogin = {})
     }
 }
 
@@ -281,6 +296,6 @@ private fun SignupScreenPreview() {
 @Composable
 private fun SignupScreenDarkPreview() {
     RangoTheme(darkTheme = true) {
-        SignupScreen(onBack = {}, onSignupSuccess = { _, _, _ -> }, onLogin = {})
+        SignupScreen(onBack = {}, register = { emptyMap() }, onSignupSuccess = {}, onLogin = {})
     }
 }

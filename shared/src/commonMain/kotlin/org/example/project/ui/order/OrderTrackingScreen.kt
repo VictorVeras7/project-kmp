@@ -25,9 +25,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,13 +37,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.delay
+import org.example.project.data.Courier
 import org.example.project.data.Order
 import org.example.project.data.OrderStep
-import org.example.project.data.PaymentMethod
-import org.example.project.data.SampleAddresses
-import org.example.project.data.TrackingIntervalMs
-import org.example.project.data.orderId
+import org.example.project.data.SampleOrder
 import org.example.project.ui.checkout.CheckoutCard
 import org.example.project.ui.checkout.CheckoutScaffold
 import org.example.project.ui.checkout.MapPlaceholder
@@ -59,22 +54,13 @@ private val CourierAvatarColor = Color(0x8CA9C4EC)
 @Composable
 fun OrderTrackingScreen(
     order: Order,
-    onAdvance: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // Avança uma etapa a cada 5 s até a entrega, como no protótipo.
-    val advance by rememberUpdatedState(onAdvance)
-    LaunchedEffect(order.id, order.step) {
-        if (order.step != OrderStep.Delivered) {
-            delay(TrackingIntervalMs)
-            advance()
-        }
-    }
-
+    // O status é atualizado pelo App, que consulta o pedido no servidor enquanto ele está em andamento.
     CheckoutScaffold(
         title = "Acompanhar pedido",
-        subtitle = order.id,
+        subtitle = order.code,
         onBack = onBack,
         modifier = modifier,
         bottomBar = null,
@@ -91,8 +77,8 @@ fun OrderTrackingScreen(
             }
         }
         StatusCard(order)
-        Timeline(order.step)
-        CourierCard()
+        Timeline(order)
+        order.courier?.let { CourierCard(it) }
     }
 }
 
@@ -112,20 +98,21 @@ private fun StatusCard(order: Order) {
         SoftIcon(order.step.icon, size = 46.dp, iconSize = 24.dp)
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(order.step.label, color = MaterialTheme.colorScheme.onSurface, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold)
-            Text(order.step.hint, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+            Text(order.hint, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
         }
         Text(order.eta, color = RangoColors.Primary, fontSize = 12.sp, fontWeight = FontWeight.ExtraBold)
     }
 }
 
 @Composable
-private fun Timeline(current: OrderStep) {
+private fun Timeline(order: Order) {
     CheckoutCard(spacing = 0.dp) {
         OrderStep.entries.forEach { step ->
             TimelineRow(
                 step = step,
-                done = step < current,
-                isCurrent = step == current,
+                time = order.stepTimes[step].orEmpty(),
+                done = step < order.step,
+                isCurrent = step == order.step,
                 hasLine = step != OrderStep.entries.last(),
             )
         }
@@ -133,7 +120,7 @@ private fun Timeline(current: OrderStep) {
 }
 
 @Composable
-private fun TimelineRow(step: OrderStep, done: Boolean, isCurrent: Boolean, hasLine: Boolean) {
+private fun TimelineRow(step: OrderStep, time: String, done: Boolean, isCurrent: Boolean, hasLine: Boolean) {
     Row(
         modifier = Modifier.height(IntrinsicSize.Min),
         horizontalArrangement = Arrangement.spacedBy(13.dp),
@@ -187,7 +174,7 @@ private fun TimelineRow(step: OrderStep, done: Boolean, isCurrent: Boolean, hasL
             )
             Text(
                 when {
-                    done -> step.time
+                    done -> time
                     isCurrent -> "agora"
                     else -> "previsto"
                 },
@@ -199,9 +186,9 @@ private fun TimelineRow(step: OrderStep, done: Boolean, isCurrent: Boolean, hasL
     }
 }
 
-// Dados fixos do entregador, como no protótipo. Os botões ainda não têm ação.
+// Entregador vindo do servidor. Os botões de mensagem e ligar ainda não têm ação, como no protótipo.
 @Composable
-private fun CourierCard() {
+private fun CourierCard(courier: Courier) {
     val shape = RoundedCornerShape(20.dp)
     Row(
         modifier = Modifier
@@ -214,9 +201,9 @@ private fun CourierCard() {
     ) {
         Box(Modifier.size(44.dp).background(CourierAvatarColor, CircleShape))
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
-            Text("Rafael Souza", color = MaterialTheme.colorScheme.onSurface, fontSize = 13.5.sp, fontWeight = FontWeight.Bold)
+            Text(courier.name, color = MaterialTheme.colorScheme.onSurface, fontSize = 13.5.sp, fontWeight = FontWeight.Bold)
             Text(
-                "Entregador · Honda CG 160",
+                "Entregador · ${courier.vehicle}",
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 11.5.sp,
                 fontWeight = FontWeight.SemiBold,
@@ -275,19 +262,11 @@ private val OrderStep.icon: ImageVector
         OrderStep.Delivered -> RangoIcons.Home
     }
 
-private val PreviewOrder = Order(
-    id = orderId(0),
-    items = emptyList(),
-    total = 0.0,
-    address = SampleAddresses.first(),
-    payment = PaymentMethod.Pix,
-)
-
 @Preview
 @Composable
 private fun OrderTrackingScreenPreview() {
     RangoTheme(darkTheme = false) {
-        OrderTrackingScreen(order = PreviewOrder.copy(step = OrderStep.Preparing), onAdvance = {}, onBack = {})
+        OrderTrackingScreen(order = SampleOrder, onBack = {})
     }
 }
 
@@ -295,6 +274,9 @@ private fun OrderTrackingScreenPreview() {
 @Composable
 private fun OrderTrackingScreenDarkPreview() {
     RangoTheme(darkTheme = true) {
-        OrderTrackingScreen(order = PreviewOrder.copy(step = OrderStep.OnTheWay), onAdvance = {}, onBack = {})
+        OrderTrackingScreen(
+            order = SampleOrder.copy(step = OrderStep.OnTheWay, hint = "O entregador está levando seu pedido"),
+            onBack = {},
+        )
     }
 }

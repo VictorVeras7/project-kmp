@@ -51,7 +51,6 @@ import org.example.project.ui.components.RangoCheckbox
 import org.example.project.ui.theme.RangoColors
 import org.example.project.ui.theme.RangoTheme
 
-private const val DemoPassword = "rango123"
 private val EmailPattern = Regex("^[^@\\s]+@[^@\\s]+\\.[a-z]{2,}$", RegexOption.IGNORE_CASE)
 
 private enum class LoginStatus { Idle, Loading, Success }
@@ -59,7 +58,9 @@ private enum class LoginStatus { Idle, Loading, Success }
 @Composable
 fun LoginScreen(
     onBack: () -> Unit,
-    onLoginSuccess: (keepConnected: Boolean) -> Unit,
+    // Faz o login no servidor. Devolve os erros por campo ("email" ou "password"); vazio = sucesso.
+    authenticate: suspend (email: String, password: String, keepConnected: Boolean) -> Map<String, String>,
+    onLoginSuccess: () -> Unit,
     onForgotPassword: () -> Unit,
     onSignup: () -> Unit,
     modifier: Modifier = Modifier,
@@ -85,15 +86,16 @@ fun LoginScreen(
 
         scope.launch {
             status = LoginStatus.Loading
-            delay(1000)
-            if (password != DemoPassword) {
+            val errors = authenticate(email, password, keepConnected)
+            if (errors.isNotEmpty()) {
                 status = LoginStatus.Idle
-                passwordError = "Senha incorreta. Tente novamente."
+                emailError = errors["email"].orEmpty()
+                passwordError = errors["password"].orEmpty()
                 return@launch
             }
             status = LoginStatus.Success
             delay(700)
-            onLoginSuccess(keepConnected)
+            onLoginSuccess()
             password = ""
             status = LoginStatus.Idle
         }
@@ -251,7 +253,7 @@ private fun LoginButton(status: LoginStatus, onClick: () -> Unit) {
 @Composable
 private fun LoginScreenPreview() {
     RangoTheme(darkTheme = false) {
-        LoginScreen(onBack = {}, onLoginSuccess = {}, onForgotPassword = {}, onSignup = {})
+        LoginScreen(onBack = {}, authenticate = { _, _, _ -> emptyMap() }, onLoginSuccess = {}, onForgotPassword = {}, onSignup = {})
     }
 }
 
@@ -259,6 +261,6 @@ private fun LoginScreenPreview() {
 @Composable
 private fun LoginScreenDarkPreview() {
     RangoTheme(darkTheme = true) {
-        LoginScreen(onBack = {}, onLoginSuccess = {}, onForgotPassword = {}, onSignup = {})
+        LoginScreen(onBack = {}, authenticate = { _, _, _ -> emptyMap() }, onLoginSuccess = {}, onForgotPassword = {}, onSignup = {})
     }
 }
