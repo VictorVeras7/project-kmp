@@ -9,9 +9,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
@@ -32,11 +34,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -52,32 +57,38 @@ import org.example.project.ui.theme.RangoIcons
 internal fun CheckoutScaffold(
     title: String,
     onBack: () -> Unit,
-    bottomBar: @Composable () -> Unit,
+    bottomBar: (@Composable () -> Unit)?,
     modifier: Modifier = Modifier,
+    subtitle: String? = null,
     contentSpacing: Dp = 14.dp,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     // Fundo branco atrás da barra de status, igual ao cabeçalho; conteúdo em cinza claro.
+    // A margem inferior do sistema fica na barra de baixo ou, sem ela, no próprio conteúdo cinza.
+    val bottomInset = WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom)
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.safeDrawing)
-                .background(MaterialTheme.colorScheme.surfaceVariant),
+                .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)),
         ) {
-            CheckoutHeader(title, onBack)
+            CheckoutHeader(title, subtitle, onBack)
             Column(
                 modifier = Modifier
                     .weight(1f)
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .then(if (bottomBar == null) Modifier.windowInsetsPadding(bottomInset) else Modifier)
                     .verticalScroll(rememberScrollState())
                     .padding(start = 18.dp, end = 18.dp, top = 16.dp, bottom = 20.dp),
                 verticalArrangement = Arrangement.spacedBy(contentSpacing),
                 content = content,
             )
-            Column(modifier = Modifier.background(MaterialTheme.colorScheme.surface)) {
-                Divider()
-                Box(modifier = Modifier.padding(start = 18.dp, end = 18.dp, top = 12.dp, bottom = 20.dp)) {
-                    bottomBar()
+            if (bottomBar != null) {
+                Column(modifier = Modifier.background(MaterialTheme.colorScheme.surface).windowInsetsPadding(bottomInset)) {
+                    Divider()
+                    Box(modifier = Modifier.padding(start = 18.dp, end = 18.dp, top = 12.dp, bottom = 20.dp)) {
+                        bottomBar()
+                    }
                 }
             }
         }
@@ -85,7 +96,7 @@ internal fun CheckoutScaffold(
 }
 
 @Composable
-private fun CheckoutHeader(title: String, onBack: () -> Unit) {
+private fun CheckoutHeader(title: String, subtitle: String?, onBack: () -> Unit) {
     Column(modifier = Modifier.background(MaterialTheme.colorScheme.surface)) {
         Row(
             modifier = Modifier
@@ -111,7 +122,18 @@ private fun CheckoutHeader(title: String, onBack: () -> Unit) {
                     modifier = Modifier.size(21.dp),
                 )
             }
-            Text(title, color = MaterialTheme.colorScheme.onSurface, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
+            Column {
+                Text(title, color = MaterialTheme.colorScheme.onSurface, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
+                if (subtitle != null) {
+                    Text(
+                        subtitle,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        fontFamily = FontFamily.Monospace,
+                    )
+                }
+            }
         }
         Divider()
     }
@@ -277,6 +299,55 @@ internal fun FormField(
         )
     }
 }
+
+// Mapa ilustrativo (endereço e acompanhamento): fundo verde com listras e etiqueta no canto.
+@Composable
+internal fun MapPlaceholder(
+    label: String,
+    height: Dp,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    val shape = RoundedCornerShape(if (height > 140.dp) 22.dp else 20.dp)
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(height)
+            .clip(shape)
+            .background(MapColor)
+            .drawBehind {
+                // Listras diagonais de 10dp, como o repeating-linear-gradient do protótipo.
+                val step = 20.dp.toPx()
+                val stripe = 10.dp.toPx()
+                var x = -size.height
+                while (x < size.width) {
+                    drawLine(
+                        color = Color.Black.copy(alpha = 0.05f),
+                        start = Offset(x, size.height),
+                        end = Offset(x + size.height, 0f),
+                        strokeWidth = stripe,
+                    )
+                    x += step * 1.414f
+                }
+            },
+        contentAlignment = Alignment.Center,
+    ) {
+        content()
+        Text(
+            label,
+            color = Color.Black.copy(alpha = 0.5f),
+            fontSize = 9.5.sp,
+            fontFamily = FontFamily.Monospace,
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(start = 12.dp, bottom = 10.dp)
+                .background(Color.White.copy(alpha = 0.8f), RoundedCornerShape(6.dp))
+                .padding(horizontal = 7.dp, vertical = 3.dp),
+        )
+    }
+}
+
+private val MapColor = Color(0xFFCFE3D8)
 
 internal val PaymentMethod.icon: ImageVector
     get() = when (this) {

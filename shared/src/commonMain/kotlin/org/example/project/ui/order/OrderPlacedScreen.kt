@@ -42,7 +42,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.example.project.data.CartItem
 import org.example.project.data.Order
-import org.example.project.data.OrderEta
 import org.example.project.data.PaymentMethod
 import org.example.project.data.SampleAddresses
 import org.example.project.data.SampleProducts
@@ -180,7 +179,7 @@ private fun OrderSummary(order: Order, modifier: Modifier = Modifier) {
             )
         }
         InfoRow("Previsão de entrega") {
-            Text(OrderEta, color = RangoColors.Primary, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold)
+            Text(order.eta, color = RangoColors.Primary, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold)
         }
         InfoRow("Pagamento") {
             Text(order.payment.label, color = MaterialTheme.colorScheme.onSurface, fontSize = 13.sp, fontWeight = FontWeight.Bold)

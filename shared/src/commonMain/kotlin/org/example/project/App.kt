@@ -26,12 +26,13 @@ import org.example.project.ui.checkout.PaymentScreen
 import org.example.project.ui.home.HomeScreen
 import org.example.project.ui.login.LoginScreen
 import org.example.project.ui.order.OrderPlacedScreen
+import org.example.project.ui.order.OrderTrackingScreen
 import org.example.project.ui.product.ProductDetailScreen
 import org.example.project.ui.signup.SignupScreen
 import org.example.project.ui.theme.RangoTheme
 import org.example.project.ui.welcome.WelcomeScreen
 
-private enum class Screen { Welcome, Login, Signup, Home, ProductDetail, Cart, Checkout, Address, Payment, OrderPlaced }
+private enum class Screen { Welcome, Login, Signup, Home, ProductDetail, Cart, Checkout, Address, Payment, OrderPlaced, Tracking }
 
 @Composable
 @Preview
@@ -170,10 +171,19 @@ fun App() {
                 )
                 Screen.OrderPlaced -> OrderPlacedScreen(
                     order = orders.first(),
-                    // O acompanhamento do pedido vem na próxima feature; por enquanto volta para a Home.
-                    onTrackOrder = { screen = Screen.Home },
+                    onTrackOrder = { screen = Screen.Tracking },
                     onBackHome = { screen = Screen.Home },
                 )
+                Screen.Tracking -> {
+                    val order = orders.first()
+                    OrderTrackingScreen(
+                        order = order,
+                        onAdvance = {
+                            orders = orders.map { if (it.id == order.id) it.copy(step = it.step.next) else it }
+                        },
+                        onBack = { screen = Screen.OrderPlaced },
+                    )
+                }
             }
         }
     }

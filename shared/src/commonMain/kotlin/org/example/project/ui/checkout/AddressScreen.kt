@@ -1,14 +1,11 @@
 package org.example.project.ui.checkout
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -26,7 +23,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
@@ -40,8 +36,6 @@ import org.example.project.data.newAddress
 import org.example.project.ui.theme.RangoColors
 import org.example.project.ui.theme.RangoIcons
 import org.example.project.ui.theme.RangoTheme
-
-private val MapColor = Color(0xFFCFE3D8)
 
 @Composable
 fun AddressScreen(
@@ -61,7 +55,9 @@ fun AddressScreen(
         contentSpacing = 12.dp,
         bottomBar = { PrimaryButton("Usar este endereço", onClick = onBack) },
     ) {
-        MapPlaceholder()
+        MapPlaceholder(label = "mapa · localização", height = 132.dp) {
+            Icon(RangoIcons.Pin, contentDescription = null, tint = RangoColors.Error, modifier = Modifier.size(34.dp))
+        }
         addresses.forEachIndexed { index, address ->
             SelectableRow(selected = index == selectedIndex, onClick = { onSelect(index) }) {
                 RadioDot(selected = index == selectedIndex)
@@ -92,29 +88,6 @@ fun AddressScreen(
             )
         }
         AddAddressButton(onClick = { showForm = !showForm })
-    }
-}
-
-@Composable
-private fun MapPlaceholder() {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(132.dp)
-            .background(MapColor, RoundedCornerShape(20.dp)),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(RangoIcons.Pin, contentDescription = null, tint = RangoColors.Error, modifier = Modifier.size(34.dp))
-        Text(
-            "mapa · localização",
-            color = Color.Black.copy(alpha = 0.5f),
-            fontSize = 9.5.sp,
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(start = 12.dp, bottom = 10.dp)
-                .background(Color.White.copy(alpha = 0.8f), RoundedCornerShape(6.dp))
-                .padding(horizontal = 7.dp, vertical = 3.dp),
-        )
     }
 }
 
