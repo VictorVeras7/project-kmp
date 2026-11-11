@@ -40,15 +40,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import org.example.project.data.CartItem
 import org.example.project.data.Order
-import org.example.project.data.PaymentMethod
-import org.example.project.data.SampleAddresses
-import org.example.project.data.SampleProducts
-import org.example.project.data.add
+import org.example.project.data.SampleOrder
 import org.example.project.data.formatMoney
-import org.example.project.data.orderId
-import org.example.project.data.totals
 import org.example.project.ui.checkout.Divider
 import org.example.project.ui.checkout.PrimaryButton
 import org.example.project.ui.theme.RangoColors
@@ -171,7 +165,7 @@ private fun OrderSummary(order: Order, modifier: Modifier = Modifier) {
     ) {
         InfoRow("Número do pedido") {
             Text(
-                order.id,
+                order.code,
                 color = MaterialTheme.colorScheme.onSurface,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Bold,
@@ -182,7 +176,7 @@ private fun OrderSummary(order: Order, modifier: Modifier = Modifier) {
             Text(order.eta, color = RangoColors.Primary, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold)
         }
         InfoRow("Pagamento") {
-            Text(order.payment.label, color = MaterialTheme.colorScheme.onSurface, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            Text(order.paymentLabel, color = MaterialTheme.colorScheme.onSurface, fontSize = 13.sp, fontWeight = FontWeight.Bold)
         }
         Divider()
         Row(
@@ -208,23 +202,11 @@ private fun InfoRow(label: String, value: @Composable () -> Unit) {
     }
 }
 
-private val PreviewItems = emptyList<CartItem>()
-    .add(SampleProducts[0], 1, setOf("a1"))
-    .add(SampleProducts[11], 2)
-
-private val PreviewOrder = Order(
-    id = orderId(0),
-    items = PreviewItems,
-    total = PreviewItems.totals(couponApplied = true).total,
-    address = SampleAddresses.first(),
-    payment = PaymentMethod.Pix,
-)
-
 @Preview
 @Composable
 private fun OrderPlacedScreenPreview() {
     RangoTheme(darkTheme = false) {
-        OrderPlacedScreen(order = PreviewOrder, onTrackOrder = {}, onBackHome = {})
+        OrderPlacedScreen(order = SampleOrder, onTrackOrder = {}, onBackHome = {})
     }
 }
 
@@ -232,6 +214,6 @@ private fun OrderPlacedScreenPreview() {
 @Composable
 private fun OrderPlacedScreenDarkPreview() {
     RangoTheme(darkTheme = true) {
-        OrderPlacedScreen(order = PreviewOrder.copy(payment = PaymentMethod.Credit), onTrackOrder = {}, onBackHome = {})
+        OrderPlacedScreen(order = SampleOrder.copy(paymentLabel = "Cartão de crédito"), onTrackOrder = {}, onBackHome = {})
     }
 }
