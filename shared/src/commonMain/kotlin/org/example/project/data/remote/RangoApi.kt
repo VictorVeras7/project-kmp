@@ -1,14 +1,23 @@
 package org.example.project.data.remote
 
 import io.ktor.client.HttpClient
+import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.HttpRequestBuilder
+import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.parameter
+import io.ktor.client.request.request
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.HttpMethod
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
+import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.json.json
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
 
 // Erro da API já com a mensagem para exibir. `fields` traz erros por campo do formulário.
@@ -17,6 +26,9 @@ class ApiException(
     override val message: String,
     val fields: Map<String, String> = emptyMap(),
 ) : Exception(message)
+
+private const val NetworkError = "NETWORK_ERROR"
+private val SessionEndedCodes = setOf("INVALID_REFRESH_TOKEN", "SESSION_EXPIRED", "INVALID_TOKEN", "UNAUTHORIZED")
 
 class RangoApi(private val baseUrl: String = ApiBaseUrl) {
     private val json = Json { ignoreUnknownKeys = true }
@@ -28,6 +40,11 @@ class RangoApi(private val baseUrl: String = ApiBaseUrl) {
     private var accessToken: String? = null
     private var refreshToken: String? = null
     private var keepSignedIn = false
+    // Só uma renovação por vez: reutilizar um refresh token antigo encerra todas as sessões.
+    private val refreshMutex = Mutex()
+
+    // Chamado quando a sessão não pode mais ser renovada (o app volta para o login).
+    var onSessionExpired: () -> Unit = {}
 
     // Sessão
 
@@ -114,6 +131,98 @@ class RangoApi(private val baseUrl: String = ApiBaseUrl) {
         call(HttpMethod.Post, "/orders") { jsonBody(CreateOrderRequest(paymentMethodId)) }
 
     suspend fun order(id: Int): OrderDto = call(HttpMethod.Get, "/orders/$id")
+
+    // Infra
+
+    private suspend inline fun <reified T> call(
+        method: HttpMethod,
+        path: String,
+        auth: Boolean = true,
+        noinline block: HttpRequestBuilder.() -> Unit = {},
+    ): T {
+        val response = send(method, path, auth, block)
+        return if (T::class == Unit::class) Unit as T else response.body()
+    }
+
+    // Envia a requisição; se o access token venceu, renova a sessão e tenta de novo uma vez.
+    private suspend fun send(
+        method: HttpMethod,
+        path: String,
+        auth: Boolean,
+        block: HttpRequestBuilder.() -> Unit,
+    ): HttpResponse {
+        val usedToken = accessToken
+        val response = rawSend(method, path, auth, block)
+        if (response.status.isSuccess()) return response
+
+        val error = readError(response)
+        if (auth && response.status == HttpStatusCode.Unauthorized && error.code == "TOKEN_EXPIRED") {
+            refreshSession(usedToken)
+            val retry = rawSend(method, path, auth, block)
+            if (retry.status.isSuccess()) return retry
+            throw readError(retry)
+        }
+        if (auth && error.code in SessionEndedCodes) endSession()
+        throw error
+    }
+
+    private suspend fun rawSend(
+        method: HttpMethod,
+        path: String,
+        auth: Boolean,
+        block: HttpRequestBuilder.() -> Unit,
+    ): HttpResponse = try {
+        client.request(baseUrl + path) {
+            this.method = method
+            if (auth) accessToken?.let { bearerAuth(it) }
+            block()
+        }
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        throw ApiException(NetworkError, "Não foi possível conectar ao servidor. Tente novamente.")
+    }
+
+    private suspend fun refreshSession(expiredToken: String?) = refreshMutex.withLock {
+        // Outra requisição já renovou enquanto esta esperava.
+        if (accessToken != expiredToken) return@withLock
+        val token = refreshToken ?: run {
+            endSession()
+            throw ApiException("SESSION_EXPIRED", "Sua sessão expirou. Entre novamente.")
+        }
+        val response = rawSend(HttpMethod.Post, "/auth/refresh", auth = false) { jsonBody(RefreshRequest(token)) }
+        if (!response.status.isSuccess()) {
+            val error = readError(response)
+            if (error.code != NetworkError) endSession()
+            throw error
+        }
+        startSession(response.body(), keepSignedIn)
+    }
+
+    private fun startSession(session: SessionDto, keep: Boolean) {
+        accessToken = session.accessToken
+        refreshToken = session.refreshToken
+        keepSignedIn = keep
+        // O refresh token é rotacionado a cada renovação: sempre salva o novo.
+        SessionStorage.saveRefreshToken(if (keep) session.refreshToken else null)
+    }
+
+    private fun endSession() {
+        val hadSession = accessToken != null || refreshToken != null
+        accessToken = null
+        refreshToken = null
+        SessionStorage.saveRefreshToken(null)
+        if (hadSession) onSessionExpired()
+    }
+
+    private suspend fun readError(response: HttpResponse): ApiException = try {
+        val error = response.body<ErrorBody>().error
+        ApiException(error.code, error.message, error.details.associate { it.field to it.message })
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        ApiException("HTTP_${response.status.value}", "Algo deu errado. Tente novamente.")
+    }
 }
 
 private inline fun <reified T> HttpRequestBuilder.jsonBody(value: T) {
