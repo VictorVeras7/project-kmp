@@ -33,6 +33,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -59,6 +60,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.launch
 import org.example.project.data.Addon
 import org.example.project.data.CartItem
 import org.example.project.data.CartTotals
@@ -85,17 +87,20 @@ fun CartScreen(
     onRemove: (key: String) -> Unit,
     onOpenProduct: (String) -> Unit,
     onCouponChange: (String) -> Unit,
-    onApplyCoupon: () -> Unit,
+    // Valida o cupom no servidor; o resultado chega em `couponApplied`.
+    onApplyCoupon: suspend () -> Unit,
     onCheckout: () -> Unit,
     onExplore: () -> Unit,
     modifier: Modifier = Modifier,
+    totals: CartTotals = items.totals(couponApplied),
     products: List<Product> = SampleProducts,
     addons: List<Addon> = SampleAddons,
 ) {
-    val totals = items.totals(couponApplied)
     val count = items.itemCount()
     // Só mostra erro depois de tentar aplicar; volta ao normal ao editar o cupom.
     var couponTried by remember { mutableStateOf(false) }
+    var couponChecking by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     // Fundo branco atrás da barra de status, igual ao cabeçalho; conteúdo em cinza claro.
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
@@ -136,14 +141,20 @@ fun CartScreen(
                     CouponRow(
                         value = coupon,
                         applied = couponApplied,
-                        invalid = couponTried && !couponApplied,
+                        invalid = couponTried && !couponChecking && !couponApplied,
                         onValueChange = {
                             couponTried = false
                             onCouponChange(it)
                         },
                         onApply = {
-                            couponTried = true
-                            onApplyCoupon()
+                            if (!couponChecking) {
+                                couponTried = true
+                                scope.launch {
+                                    couponChecking = true
+                                    onApplyCoupon()
+                                    couponChecking = false
+                                }
+                            }
                         },
                     )
                     SummaryCard(totals)

@@ -75,6 +75,8 @@ fun HomeScreen(
     onOpenSearch: () -> Unit,
     modifier: Modifier = Modifier,
     products: List<Product> = SampleProducts,
+    // Avisa a troca de categoria, para o App buscar os produtos dela no servidor.
+    onCategoryChange: (String) -> Unit = {},
 ) {
     var category by rememberSaveable { mutableStateOf(ProductCategories.first()) }
 
@@ -93,7 +95,13 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.spacedBy(20.dp),
             ) {
                 SearchBar(onClick = onOpenSearch)
-                CategoryChips(selected = category, onSelect = { category = it })
+                CategoryChips(
+                    selected = category,
+                    onSelect = {
+                        category = it
+                        onCategoryChange(it)
+                    },
+                )
 
                 if (category == ProductCategories.first()) {
                     PromoBanner()

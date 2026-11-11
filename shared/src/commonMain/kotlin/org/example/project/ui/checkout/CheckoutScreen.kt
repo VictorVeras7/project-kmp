@@ -29,15 +29,16 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.delay
 import org.example.project.data.Addon
 import org.example.project.data.CartItem
+import org.example.project.data.CartTotals
 import org.example.project.data.CouponCode
 import org.example.project.data.DeliveryAddress
-import org.example.project.data.PaymentMethod
+import org.example.project.data.PaymentOption
 import org.example.project.data.Product
 import org.example.project.data.SampleAddons
 import org.example.project.data.SampleAddresses
+import org.example.project.data.SamplePayments
 import org.example.project.data.SampleProducts
 import org.example.project.data.add
 import org.example.project.data.formatMoney
@@ -46,32 +47,27 @@ import org.example.project.ui.theme.RangoColors
 import org.example.project.ui.theme.RangoIcons
 import org.example.project.ui.theme.RangoTheme
 
-// Tempo simulado de processamento do pagamento, como no protótipo.
-private const val ConfirmDelayMs = 1300L
-
 @Composable
 fun CheckoutScreen(
     items: List<CartItem>,
     couponApplied: Boolean,
-    address: DeliveryAddress,
-    payment: PaymentMethod,
+    address: DeliveryAddress?,
+    payment: PaymentOption?,
     onBack: () -> Unit,
     onChangeAddress: () -> Unit,
     onChangePayment: () -> Unit,
-    onOrderConfirmed: () -> Unit,
+    // Envia o pedido ao servidor; devolve false se falhou, para liberar o botão de novo.
+    onConfirmOrder: suspend () -> Boolean,
     modifier: Modifier = Modifier,
+    totals: CartTotals = items.totals(couponApplied),
     products: List<Product> = SampleProducts,
     addons: List<Addon> = SampleAddons,
 ) {
-    val totals = items.totals(couponApplied)
     var processing by remember { mutableStateOf(false) }
-    val confirm by rememberUpdatedState(onOrderConfirmed)
+    val confirm by rememberUpdatedState(onConfirmOrder)
 
     LaunchedEffect(processing) {
-        if (processing) {
-            delay(ConfirmDelayMs)
-            confirm()
-        }
+        if (processing && !confirm()) processing = false
     }
 
     CheckoutScaffold(
@@ -82,7 +78,7 @@ fun CheckoutScreen(
             PrimaryButton(
                 text = if (processing) "Processando pagamento..." else "Confirmar pedido",
                 onClick = { processing = true },
-                enabled = !processing,
+                enabled = !processing && address != null && payment != null && items.isNotEmpty(),
                 leading = if (processing) {
                     {
                         CircularProgressIndicator(
@@ -100,17 +96,21 @@ fun CheckoutScreen(
     ) {
         CheckoutCard {
             CardTitleRow(RangoIcons.Pin, "Endereço de entrega", onChange = onChangeAddress)
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(address.label, color = RangoColors.Primary, fontSize = 12.sp, fontWeight = FontWeight.ExtraBold)
-                Text(address.line, color = MaterialTheme.colorScheme.onSurface, fontSize = 13.5.sp, fontWeight = FontWeight.Bold)
-                Text(address.city, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+            if (address == null) {
+                Text("Cadastre um endereço de entrega.", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(address.label, color = RangoColors.Primary, fontSize = 12.sp, fontWeight = FontWeight.ExtraBold)
+                    Text(address.line, color = MaterialTheme.colorScheme.onSurface, fontSize = 13.5.sp, fontWeight = FontWeight.Bold)
+                    Text(address.city, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                }
             }
         }
 
         CheckoutCard {
             CardTitleRow(RangoIcons.Wallet, "Forma de pagamento", onChange = onChangePayment)
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(11.dp)) {
-                SoftIcon(payment.icon)
+            if (payment != null) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(11.dp)) {
+                SoftIcon(payment.method.icon)
                 Column {
                     Text(payment.label, color = MaterialTheme.colorScheme.onSurface, fontSize = 13.5.sp, fontWeight = FontWeight.Bold)
                     Text(
@@ -235,11 +235,11 @@ private fun CheckoutScreenPreview() {
             items = PreviewCart,
             couponApplied = true,
             address = SampleAddresses.first(),
-            payment = PaymentMethod.Pix,
+            payment = SamplePayments[0],
             onBack = {},
             onChangeAddress = {},
             onChangePayment = {},
-            onOrderConfirmed = {},
+            onConfirmOrder = { true },
         )
     }
 }
@@ -252,11 +252,11 @@ private fun CheckoutScreenDarkPreview() {
             items = PreviewCart,
             couponApplied = false,
             address = SampleAddresses[1],
-            payment = PaymentMethod.Credit,
+            payment = SamplePayments[1],
             onBack = {},
             onChangeAddress = {},
             onChangePayment = {},
-            onOrderConfirmed = {},
+            onConfirmOrder = { true },
         )
     }
 }

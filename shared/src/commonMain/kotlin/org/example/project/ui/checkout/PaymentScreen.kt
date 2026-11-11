@@ -20,15 +20,17 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import org.example.project.data.PaymentMethod
+import org.example.project.data.PaymentOption
+import org.example.project.data.SamplePayments
 import org.example.project.ui.theme.RangoColors
 import org.example.project.ui.theme.RangoIcons
 import org.example.project.ui.theme.RangoTheme
 
 @Composable
 fun PaymentScreen(
-    selected: PaymentMethod,
-    onSelect: (PaymentMethod) -> Unit,
+    options: List<PaymentOption>,
+    selected: PaymentOption?,
+    onSelect: (PaymentOption) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -39,22 +41,22 @@ fun PaymentScreen(
         contentSpacing = 11.dp,
         bottomBar = { PrimaryButton("Confirmar forma de pagamento", onClick = onBack) },
     ) {
-        PaymentMethod.entries.forEach { method ->
-            SelectableRow(selected = method == selected, onClick = { onSelect(method) }) {
-                SoftIcon(method.icon, size = 42.dp, iconSize = 22.dp)
+        options.forEach { option ->
+            SelectableRow(selected = option.id == selected?.id, onClick = { onSelect(option) }) {
+                SoftIcon(option.method.icon, size = 42.dp, iconSize = 22.dp)
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text(method.label, color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                    Text(option.label, color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                     Text(
-                        method.hint,
+                        option.hint,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 11.5.sp,
                         fontWeight = FontWeight.Medium,
                     )
                 }
-                RadioDot(selected = method == selected)
+                RadioDot(selected = option.id == selected?.id)
             }
         }
-        if (selected.needsCard) CardForm()
+        if (selected?.method?.needsCard == true) CardForm()
     }
 }
 
@@ -85,7 +87,7 @@ private fun CardForm() {
 @Composable
 private fun PaymentScreenPreview() {
     RangoTheme(darkTheme = false) {
-        PaymentScreen(selected = PaymentMethod.Pix, onSelect = {}, onBack = {})
+        PaymentScreen(options = SamplePayments, selected = SamplePayments[0], onSelect = {}, onBack = {})
     }
 }
 
@@ -93,6 +95,6 @@ private fun PaymentScreenPreview() {
 @Composable
 private fun PaymentScreenDarkPreview() {
     RangoTheme(darkTheme = true) {
-        PaymentScreen(selected = PaymentMethod.Credit, onSelect = {}, onBack = {})
+        PaymentScreen(options = SamplePayments, selected = SamplePayments[1], onSelect = {}, onBack = {})
     }
 }
