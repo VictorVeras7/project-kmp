@@ -28,8 +28,43 @@ data class Order(
     val stepTimes: Map<OrderStep, String> = emptyMap(),
     val courier: Courier? = null,
 ) {
-    val itemsLabel: String get() = if (itemCount == 1) "1 item" else "$itemCount itens"
+    val itemsLabel: String get() = itemsLabel(itemCount)
 }
+
+fun itemsLabel(count: Int): String = if (count == 1) "1 item" else "$count itens"
+
+// Situação do pedido no histórico: em andamento, entregue ou cancelado.
+enum class OrderStatus { Live, Done, Cancelled }
+
+// Pedido na lista de "Meus pedidos".
+data class OrderSummary(
+    val id: Int,
+    val code: String,
+    val date: String,
+    val status: OrderStatus,
+    val statusLabel: String,
+    val itemCount: Int,
+    val total: Double,
+    val itemsSummary: String,
+    val hue: Float,
+)
+
+data class OrderLine(val name: String, val restaurant: String, val quantity: Int, val total: Double, val hue: Float)
+
+// Pedido completo, para a tela de detalhes.
+data class OrderDetail(
+    val id: Int,
+    val code: String,
+    val date: String,
+    val status: OrderStatus,
+    val statusLabel: String,
+    val items: List<OrderLine>,
+    val address: String,
+    val payment: PaymentMethod?,
+    val paymentLabel: String,
+    val totals: CartTotals,
+    val couponCode: String?,
+)
 
 val SampleOrder = Order(
     id = 10528,
