@@ -79,3 +79,26 @@ val SampleOrder = Order(
     stepTimes = mapOf(OrderStep.Received to "19:42", OrderStep.Confirmed to "19:44", OrderStep.Preparing to "19:51"),
     courier = Courier("Juliana Prado", "Yamaha Factor 150"),
 )
+
+val SampleOrderHistory = listOf(
+    OrderSummary(10482, "RG-10482", "Hoje · 19:42", OrderStatus.Live, "Em preparação", 3, 71.8, "1× Burger duplo cheddar, 2× Limonada suíça", 48f),
+    OrderSummary(10391, "RG-10391", "12 ago · 20:15", OrderStatus.Done, "Entregue", 1, 52.9, "1× Pizza margherita", 28f),
+    OrderSummary(10298, "RG-10298", "28 jul · 21:30", OrderStatus.Cancelled, "Cancelado", 1, 37.8, "1× Poke de salmão", 190f),
+)
+
+val SampleOrderDetail = OrderDetail(
+    id = 10391,
+    code = "RG-10391",
+    date = "12 ago · 20:15",
+    status = OrderStatus.Done,
+    statusLabel = "Entregue",
+    items = listOf(
+        OrderLine("Lasanha à bolonhesa", "Cantina Bella", 2, 84.0, 72f),
+        OrderLine("Burger duplo cheddar", "Casa do Burger", 1, 38.9, 48f),
+    ),
+    address = "Rua das Palmeiras, 128 · apto 42",
+    payment = PaymentMethod.Credit,
+    paymentLabel = "Cartão de crédito",
+    totals = CartTotals(122.9, 0.0, 12.29),
+    couponCode = "RANGO10",
+)
