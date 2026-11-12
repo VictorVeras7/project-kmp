@@ -9,7 +9,14 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.example.project.data.AddressForm
+import org.example.project.data.AnyDeliveryTime
 import org.example.project.data.Cart
+import org.example.project.data.ProductCategories
+import org.example.project.data.SearchFilters
+import org.example.project.data.SearchMaxPrice
+import org.example.project.data.SearchSuggestion
+import org.example.project.data.formatMoney
+import org.example.project.data.formatRating
 import org.example.project.data.DeliveryAddress
 import org.example.project.data.Order
 import org.example.project.data.OrderDetail
@@ -67,6 +74,21 @@ class RangoStore(private val api: RangoApi, private val scope: CoroutineScope) {
     var ordersLoading by mutableStateOf(false)
         private set
     var orderDetail by mutableStateOf<OrderDetail?>(null)
+        private set
+
+    // Busca: termo e filtros ficam aqui para sobreviver à ida ao produto e à volta.
+    var searchQuery by mutableStateOf("")
+        private set
+    var searchFilters by mutableStateOf(SearchFilters())
+        private set
+    // null = nada buscado ainda (termo vazio e sem filtros): a tela mostra recentes e sugestões.
+    var searchResults by mutableStateOf<List<Product>?>(null)
+        private set
+    var searching by mutableStateOf(false)
+        private set
+    var recentSearches by mutableStateOf(listOf<String>())
+        private set
+    var suggestions by mutableStateOf(listOf<SearchSuggestion>())
         private set
 
     // Mensagem de erro para o aviso na parte de baixo da tela; o App limpa depois de mostrar.
@@ -141,6 +163,12 @@ class RangoStore(private val api: RangoApi, private val scope: CoroutineScope) {
         liveOrders = emptyList()
         pastOrders = emptyList()
         orderDetail = null
+        searchQuery = ""
+        searchFilters = SearchFilters()
+        searchResults = null
+        searching = false
+        recentSearches = emptyList()
+        suggestions = emptyList()
     }
 
     // Carrega tudo o que a Home e o checkout precisam, em paralelo.
@@ -213,6 +241,48 @@ class RangoStore(private val api: RangoApi, private val scope: CoroutineScope) {
         val favorites = list.filter { it.isFavorite }.map { it.id }.toSet()
         val notFavorites = list.filterNot { it.isFavorite }.map { it.id }.toSet()
         favoriteIds = favoriteIds - notFavorites + favorites
+    }
+
+    // Busca
+
+    // Abertura da tela: buscas recentes e sugestões ("mais pedidos").
+    fun loadSearchHome() {
+        launchSafely {
+            coroutineScope {
+                val recent = async { api.recentSearches() }
+                val names = async { api.searchSuggestions() }
+                recentSearches = recent.await()
+                suggestions = names.await().take(4).map { name ->
+                    val product = products.firstOrNull { it.name == name }
+                    val hint = product?.let { "${it.restaurant} · ${formatRating(it.rating)} · ${formatMoney(it.price)}" }
+                    SearchSuggestion(name, hint.orEmpty())
+                }
+            }
+        }
+    }
+
+    // Digitação: espera o usuário parar de digitar antes de buscar.
+    fun changeQuery(text: String) {
+        searchQuery = text
+        runSearch(debounce = true)
+    }
+
+    fun applyFilters(filters: SearchFilters) {
+        searchFilters = filters
+        runSearch(debounce = false)
+    }
+
+    // "Ver tudo" da Home: abre a busca sem termo e com os filtros da seção.
+    fun startSearch(filters: SearchFilters) {
+        searchQuery = ""
+        applyFilters(filters)
+    }
+
+    // Termo confirmado (teclado ou produto aberto dos resultados) entra nas buscas recentes.
+    fun saveRecentSearch() {
+        val term = searchQuery.trim()
+        if (term.isEmpty()) return
+        launchSafely { recentSearches = api.addRecentSearch(term) }
     }
 
     // Carrinho
