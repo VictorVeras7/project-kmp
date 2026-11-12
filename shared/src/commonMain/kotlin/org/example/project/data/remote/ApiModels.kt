@@ -163,6 +163,12 @@ data class OrderDto(
     val estimatedDelivery: EstimatedDeliveryDto? = null,
     val payment: OrderPaymentDto,
     val courier: CourierDto? = null,
+    // Campos usados na tela de detalhes do pedido.
+    val statusLabel: String = "",
+    val createdAt: String = "",
+    val items: List<OrderItemDto> = emptyList(),
+    val address: AddressDto? = null,
+    val amounts: OrderAmountsDto? = null,
 )
 
 @Serializable
@@ -172,7 +178,46 @@ data class TimelineStepDto(val step: Int, val reachedAt: String? = null)
 data class EstimatedDeliveryDto(val minMinutes: Int, val maxMinutes: Int)
 
 @Serializable
-data class OrderPaymentDto(val label: String)
+data class OrderPaymentDto(val label: String, val type: String = "")
 
 @Serializable
 data class CourierDto(val name: String, val vehicle: String)
+
+@Serializable
+data class OrderItemDto(
+    val name: String,
+    val restaurant: String = "",
+    val imageHue: Float,
+    val quantity: Int,
+    val total: Double,
+)
+
+@Serializable
+data class OrderAmountsDto(
+    val subtotal: Double,
+    val deliveryFee: Double,
+    val discount: Double,
+    val total: Double,
+    val couponCode: String? = null,
+)
+
+// Item de GET /orders (Meus pedidos).
+@Serializable
+data class OrderListItemDto(
+    val id: Int,
+    val code: String,
+    val status: String,
+    val statusLabel: String,
+    val createdAt: String,
+    val total: Double,
+    val itemCount: Int,
+    val itemsSummary: String,
+    val thumbnail: ThumbnailDto? = null,
+)
+
+@Serializable
+data class ThumbnailDto(val imageHue: Float)
+
+// Resposta de POST /orders/:id/reorder: carrinho novo e produtos que não estão mais disponíveis.
+@Serializable
+data class ReorderDto(val cart: CartDto, val skippedProductIds: List<String> = emptyList())

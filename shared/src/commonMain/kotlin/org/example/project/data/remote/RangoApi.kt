@@ -132,6 +132,16 @@ class RangoApi(private val baseUrl: String = ApiBaseUrl) {
 
     suspend fun order(id: Int): OrderDto = call(HttpMethod.Get, "/orders/$id")
 
+    // group: "live" (em andamento) ou "past" (entregues e cancelados).
+    suspend fun orders(group: String): List<OrderListItemDto> =
+        call<ListResponse<OrderListItemDto>>(HttpMethod.Get, "/orders") {
+            parameter("group", group)
+            parameter("pageSize", 50)
+        }.data
+
+    // Troca o carrinho pelos itens do pedido.
+    suspend fun reorder(id: Int): ReorderDto = call(HttpMethod.Post, "/orders/$id/reorder")
+
     // Infra
 
     private suspend inline fun <reified T> call(

@@ -2,6 +2,7 @@ package org.example.project.data.remote
 
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.todayIn
 import org.example.project.data.Addon
 import org.example.project.data.Cart
 import org.example.project.data.CartItem
@@ -9,11 +10,16 @@ import org.example.project.data.CartTotals
 import org.example.project.data.Courier
 import org.example.project.data.DeliveryAddress
 import org.example.project.data.Order
+import org.example.project.data.OrderDetail
+import org.example.project.data.OrderLine
+import org.example.project.data.OrderStatus
 import org.example.project.data.OrderStep
+import org.example.project.data.OrderSummary
 import org.example.project.data.PaymentMethod
 import org.example.project.data.PaymentOption
 import org.example.project.data.Product
 import org.example.project.data.ProductTag
+import kotlin.time.Clock
 import kotlin.time.Instant
 
 // Converte as respostas da API nos modelos usados pelas telas.
@@ -97,8 +103,56 @@ fun OrderDto.toOrder(): Order {
     )
 }
 
+private fun orderStatus(status: String) = when (status) {
+    "live" -> OrderStatus.Live
+    "cancel" -> OrderStatus.Cancelled
+    else -> OrderStatus.Done
+}
+
+fun OrderListItemDto.toSummary() = OrderSummary(
+    id = id,
+    code = code,
+    date = orderDate(createdAt),
+    status = orderStatus(status),
+    statusLabel = statusLabel,
+    itemCount = itemCount,
+    total = total,
+    itemsSummary = itemsSummary,
+    hue = thumbnail?.imageHue ?: 0f,
+)
+
+fun OrderDto.toDetail() = OrderDetail(
+    id = id,
+    code = code,
+    date = orderDate(createdAt),
+    status = orderStatus(status),
+    statusLabel = statusLabel,
+    items = items.map { OrderLine(it.name, it.restaurant, it.quantity, it.total, it.imageHue) },
+    address = address?.line.orEmpty(),
+    payment = MethodsByType[payment.type],
+    paymentLabel = payment.label,
+    totals = amounts?.let { CartTotals(it.subtotal, it.deliveryFee, it.discount) } ?: CartTotals(total, 0.0, 0.0),
+    couponCode = amounts?.couponCode,
+)
+
+private val Months = listOf("jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez")
+
+// "2026-08-12T23:15:00.000Z" -> "12 ago · 20:15", ou "Hoje · 20:15" se for no dia atual.
+private fun orderDate(iso: String): String = runCatching {
+    val zone = TimeZone.currentSystemDefault()
+    val time = Instant.parse(iso).toLocalDateTime(zone)
+    val day = if (time.date == Clock.System.todayIn(zone)) {
+        "Hoje"
+    } else {
+        "${time.day.toString().padStart(2, '0')} ${Months[time.month.ordinal]}"
+    }
+    "$day · ${hourMinute(time.hour, time.minute)}"
+}.getOrDefault("")
+
 // "2026-09-21T19:42:00.000Z" -> "16:42" no fuso do aparelho.
 private fun localTime(iso: String): String? = runCatching {
     val time = Instant.parse(iso).toLocalDateTime(TimeZone.currentSystemDefault())
-    "${time.hour.toString().padStart(2, '0')}:${time.minute.toString().padStart(2, '0')}"
+    hourMinute(time.hour, time.minute)
 }.getOrNull()
+
+private fun hourMinute(hour: Int, minute: Int) = "${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}"
