@@ -87,6 +87,11 @@ data class ProductDto(
 @Serializable
 data class AddonDto(val id: String, val name: String, val price: Double)
 
+// Busca
+
+@Serializable
+data class RecentSearchRequest(val term: String)
+
 // Carrinho
 
 @Serializable
