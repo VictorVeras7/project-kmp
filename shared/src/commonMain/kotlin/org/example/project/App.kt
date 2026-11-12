@@ -1,8 +1,10 @@
 package org.example.project
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.CircularProgressIndicator
@@ -21,6 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.example.project.data.OrderPollIntervalMs
@@ -30,6 +33,7 @@ import org.example.project.ui.cart.CartScreen
 import org.example.project.ui.checkout.AddressScreen
 import org.example.project.ui.checkout.CheckoutScreen
 import org.example.project.ui.checkout.PaymentScreen
+import org.example.project.ui.components.BottomNavBar
 import org.example.project.ui.components.MainTab
 import org.example.project.ui.home.HomeScreen
 import org.example.project.ui.login.LoginScreen
@@ -114,159 +118,181 @@ fun App() {
         screen = Screen.ProductDetail
     }
 
+    val tab = TabScreens[screen]
+
     RangoTheme {
         Box(Modifier.fillMaxSize()) {
-            stateHolder.SaveableStateProvider(screen.name) {
-                when (screen) {
-                    Screen.Splash -> Splash()
-                    Screen.Welcome -> WelcomeScreen(
-                        onLogin = { screen = Screen.Login },
-                        onSignup = { screen = Screen.Signup },
-                    )
-                    Screen.Login -> LoginScreen(
-                        onBack = { screen = Screen.Welcome },
-                        authenticate = store::login,
-                        onLoginSuccess = { screen = Screen.Home },
-                        onForgotPassword = {},
-                        onSignup = { screen = Screen.Signup },
-                    )
-                    Screen.Signup -> SignupScreen(
-                        onBack = { screen = Screen.Welcome },
-                        register = store::register,
-                        onSignupSuccess = { screen = Screen.Home },
-                        onLogin = { screen = Screen.Login },
-                    )
-                    Screen.Home -> HomeScreen(
-                        userName = store.userName,
-                        address = store.selectedAddress?.short.orEmpty(),
-                        cartCount = store.cart.items.itemCount(),
-                        favoriteIds = store.favoriteIds,
-                        onToggleFavorite = store::toggleFavorite,
-                        onAddToCart = { id -> store.addToCart(id, 1) },
-                        onOpenProduct = { id -> openProduct(id, Screen.Home) },
-                        onOpenCart = { openCart(Screen.Home) },
-                        onOpenNotifications = {},
-                        onOpenSearch = {},
-                        products = store.products,
-                        onCategoryChange = store::loadCategory,
-                    )
-                    Screen.ProductDetail -> {
-                        val product = store.products.firstOrNull { it.id == productId }
-                        if (product == null) {
-                            Splash()
-                        } else {
-                            ProductDetailScreen(
-                                product = product,
-                                isFavorite = product.id in store.favoriteIds,
-                                onBack = { screen = productOrigin },
-                                onToggleFavorite = { store.toggleFavorite(product.id) },
-                                onAddToCart = { quantity, addonIds, notes ->
-                                    store.addToCart(product.id, quantity, addonIds, notes)
-                                    screen = productOrigin
-                                },
-                                addons = store.addons,
+            Column(Modifier.fillMaxSize()) {
+                Box(Modifier.weight(1f)) {
+                    stateHolder.SaveableStateProvider(screen.name) {
+                        when (screen) {
+                            Screen.Splash -> Splash()
+                            Screen.Welcome -> WelcomeScreen(
+                                onLogin = { screen = Screen.Login },
+                                onSignup = { screen = Screen.Signup },
                             )
-                        }
-                    }
-                    Screen.Cart -> CartScreen(
-                        items = store.cart.items,
-                        coupon = store.couponInput,
-                        couponApplied = store.cart.couponApplied,
-                        onBack = { screen = cartOrigin },
-                        onClear = store::clearCart,
-                        onChangeQuantity = store::changeQuantity,
-                        onRemove = store::removeLine,
-                        onOpenProduct = { id -> openProduct(id, Screen.Cart) },
-                        onCouponChange = store::changeCoupon,
-                        onApplyCoupon = store::applyCoupon,
-                        onCheckout = { screen = Screen.Checkout },
-                        onExplore = { screen = Screen.Home },
-                        totals = store.cart.totals,
-                        products = store.products,
-                        addons = store.addons,
-                    )
-                    Screen.Checkout -> CheckoutScreen(
-                        items = store.cart.items,
-                        couponApplied = store.cart.couponApplied,
-                        address = store.selectedAddress,
-                        payment = store.payment,
-                        onBack = { screen = Screen.Cart },
-                        onChangeAddress = { screen = Screen.Address },
-                        onChangePayment = { screen = Screen.Payment },
-                        onConfirmOrder = {
-                            val ok = store.confirmOrder()
-                            if (ok) screen = Screen.OrderPlaced
-                            ok
-                        },
-                        totals = store.cart.totals,
-                        products = store.products,
-                        addons = store.addons,
-                    )
-                    Screen.Address -> AddressScreen(
-                        addresses = store.addresses,
-                        selectedIndex = store.addresses.indexOf(store.selectedAddress),
-                        onSelect = store::selectAddress,
-                        onSaveAddress = store::saveAddress,
-                        onBack = { screen = Screen.Checkout },
-                    )
-                    Screen.Payment -> PaymentScreen(
-                        options = store.payments,
-                        selected = store.payment,
-                        onSelect = { store.payment = it },
-                        onBack = { screen = Screen.Checkout },
-                    )
-                    Screen.OrderPlaced -> store.order?.let { placed ->
-                        OrderPlacedScreen(
-                            order = placed,
-                            onTrackOrder = {
-                                trackingOrigin = Screen.OrderPlaced
-                                screen = Screen.Tracking
-                            },
-                            onBackHome = { screen = Screen.Home },
-                        )
-                    }
-                    Screen.Tracking -> store.order?.let { tracked ->
-                        OrderTrackingScreen(order = tracked, onBack = { screen = trackingOrigin })
-                    }
-                    Screen.Orders -> OrdersScreen(
-                        liveOrders = store.liveOrders,
-                        pastOrders = store.pastOrders,
-                        loading = store.ordersLoading,
-                        onOpenOrder = { id ->
-                            detailId = id
-                            store.loadOrderDetail(id)
-                            screen = Screen.OrderDetail
-                        },
-                        onTrackOrder = { id ->
-                            scope.launch {
-                                if (store.trackOrder(id)) {
-                                    trackingOrigin = Screen.Orders
-                                    screen = Screen.Tracking
+                            Screen.Login -> LoginScreen(
+                                onBack = { screen = Screen.Welcome },
+                                authenticate = store::login,
+                                onLoginSuccess = { screen = Screen.Home },
+                                onForgotPassword = {},
+                                onSignup = { screen = Screen.Signup },
+                            )
+                            Screen.Signup -> SignupScreen(
+                                onBack = { screen = Screen.Welcome },
+                                register = store::register,
+                                onSignupSuccess = { screen = Screen.Home },
+                                onLogin = { screen = Screen.Login },
+                            )
+                            Screen.Home -> HomeScreen(
+                                userName = store.userName,
+                                address = store.selectedAddress?.short.orEmpty(),
+                                cartCount = store.cart.items.itemCount(),
+                                favoriteIds = store.favoriteIds,
+                                onToggleFavorite = store::toggleFavorite,
+                                onAddToCart = { id -> store.addToCart(id, 1) },
+                                onOpenProduct = { id -> openProduct(id, Screen.Home) },
+                                onOpenCart = { openCart(Screen.Home) },
+                                onOpenNotifications = {},
+                                onOpenSearch = {},
+                                products = store.products,
+                                onCategoryChange = store::loadCategory,
+                            )
+                            Screen.ProductDetail -> {
+                                val product = store.products.firstOrNull { it.id == productId }
+                                if (product == null) {
+                                    Splash()
+                                } else {
+                                    ProductDetailScreen(
+                                        product = product,
+                                        isFavorite = product.id in store.favoriteIds,
+                                        onBack = { screen = productOrigin },
+                                        onToggleFavorite = { store.toggleFavorite(product.id) },
+                                        onAddToCart = { quantity, addonIds, notes ->
+                                            store.addToCart(product.id, quantity, addonIds, notes)
+                                            screen = productOrigin
+                                        },
+                                        addons = store.addons,
+                                    )
                                 }
                             }
-                        },
-                        onReorder = { id -> reorder(id, Screen.Orders) },
-                        onExplore = { screen = Screen.Home },
-                    )
-                    Screen.OrderDetail -> {
-                        val detail = store.orderDetail?.takeIf { it.id == detailId }
-                        if (detail == null) {
-                            Splash()
-                        } else {
-                            OrderDetailScreen(
-                                order = detail,
-                                onBack = { screen = Screen.Orders },
-                                onReorder = { if (store.reorder(detail.id)) openCart(Screen.OrderDetail) },
+                            Screen.Cart -> CartScreen(
+                                items = store.cart.items,
+                                coupon = store.couponInput,
+                                couponApplied = store.cart.couponApplied,
+                                onBack = { screen = cartOrigin },
+                                onClear = store::clearCart,
+                                onChangeQuantity = store::changeQuantity,
+                                onRemove = store::removeLine,
+                                onOpenProduct = { id -> openProduct(id, Screen.Cart) },
+                                onCouponChange = store::changeCoupon,
+                                onApplyCoupon = store::applyCoupon,
+                                onCheckout = { screen = Screen.Checkout },
+                                onExplore = { screen = Screen.Home },
+                                totals = store.cart.totals,
+                                products = store.products,
+                                addons = store.addons,
                             )
+                            Screen.Checkout -> CheckoutScreen(
+                                items = store.cart.items,
+                                couponApplied = store.cart.couponApplied,
+                                address = store.selectedAddress,
+                                payment = store.payment,
+                                onBack = { screen = Screen.Cart },
+                                onChangeAddress = { screen = Screen.Address },
+                                onChangePayment = { screen = Screen.Payment },
+                                onConfirmOrder = {
+                                    val ok = store.confirmOrder()
+                                    if (ok) screen = Screen.OrderPlaced
+                                    ok
+                                },
+                                totals = store.cart.totals,
+                                products = store.products,
+                                addons = store.addons,
+                            )
+                            Screen.Address -> AddressScreen(
+                                addresses = store.addresses,
+                                selectedIndex = store.addresses.indexOf(store.selectedAddress),
+                                onSelect = store::selectAddress,
+                                onSaveAddress = store::saveAddress,
+                                onBack = { screen = Screen.Checkout },
+                            )
+                            Screen.Payment -> PaymentScreen(
+                                options = store.payments,
+                                selected = store.payment,
+                                onSelect = { store.payment = it },
+                                onBack = { screen = Screen.Checkout },
+                            )
+                            Screen.OrderPlaced -> store.order?.let { placed ->
+                                OrderPlacedScreen(
+                                    order = placed,
+                                    onTrackOrder = {
+                                        trackingOrigin = Screen.OrderPlaced
+                                        screen = Screen.Tracking
+                                    },
+                                    onBackHome = { screen = Screen.Home },
+                                )
+                            }
+                            Screen.Tracking -> store.order?.let { tracked ->
+                                OrderTrackingScreen(order = tracked, onBack = { screen = trackingOrigin })
+                            }
+                            Screen.Orders -> OrdersScreen(
+                                liveOrders = store.liveOrders,
+                                pastOrders = store.pastOrders,
+                                loading = store.ordersLoading,
+                                onOpenOrder = { id ->
+                                    detailId = id
+                                    store.loadOrderDetail(id)
+                                    screen = Screen.OrderDetail
+                                },
+                                onTrackOrder = { id ->
+                                    scope.launch {
+                                        if (store.trackOrder(id)) {
+                                            trackingOrigin = Screen.Orders
+                                            screen = Screen.Tracking
+                                        }
+                                    }
+                                },
+                                onReorder = { id -> reorder(id, Screen.Orders) },
+                                onExplore = { screen = Screen.Home },
+                            )
+                            Screen.OrderDetail -> {
+                                val detail = store.orderDetail?.takeIf { it.id == detailId }
+                                if (detail == null) {
+                                    Splash()
+                                } else {
+                                    OrderDetailScreen(
+                                        order = detail,
+                                        onBack = { screen = Screen.Orders },
+                                        onReorder = { if (store.reorder(detail.id)) openCart(Screen.OrderDetail) },
+                                    )
+                                }
+                            }
                         }
                     }
+                }
+                if (tab != null) {
+                    BottomNavBar(
+                        selected = tab,
+                        onSelect = { selected ->
+                            when (selected) {
+                                MainTab.Home -> screen = Screen.Home
+                                MainTab.Orders -> screen = Screen.Orders
+                                // Busca, favoritos e perfil ficam para as próximas issues.
+                                else -> store.message = "${selected.label} estará disponível em breve."
+                            }
+                        },
+                        badges = mapOf(MainTab.Orders to store.liveOrders.size, MainTab.Favorites to store.favoriteIds.size),
+                    )
                 }
             }
             SnackbarHost(
                 hostState = snackbar,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .windowInsetsPadding(WindowInsets.safeDrawing),
+                    .windowInsetsPadding(WindowInsets.safeDrawing)
+                    // Nas abas, o aviso aparece acima da barra inferior.
+                    .padding(bottom = if (tab != null) 64.dp else 0.dp),
             )
         }
     }
