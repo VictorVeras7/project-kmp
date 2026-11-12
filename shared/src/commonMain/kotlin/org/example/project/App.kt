@@ -22,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.example.project.data.OrderPollIntervalMs
 import org.example.project.data.itemCount
 import org.example.project.data.remote.RangoApi
@@ -29,10 +30,13 @@ import org.example.project.ui.cart.CartScreen
 import org.example.project.ui.checkout.AddressScreen
 import org.example.project.ui.checkout.CheckoutScreen
 import org.example.project.ui.checkout.PaymentScreen
+import org.example.project.ui.components.MainTab
 import org.example.project.ui.home.HomeScreen
 import org.example.project.ui.login.LoginScreen
+import org.example.project.ui.order.OrderDetailScreen
 import org.example.project.ui.order.OrderPlacedScreen
 import org.example.project.ui.order.OrderTrackingScreen
+import org.example.project.ui.order.OrdersScreen
 import org.example.project.ui.product.ProductDetailScreen
 import org.example.project.ui.signup.SignupScreen
 import org.example.project.ui.theme.RangoColors
@@ -40,8 +44,12 @@ import org.example.project.ui.theme.RangoTheme
 import org.example.project.ui.welcome.WelcomeScreen
 
 private enum class Screen {
-    Splash, Welcome, Login, Signup, Home, ProductDetail, Cart, Checkout, Address, Payment, OrderPlaced, Tracking
+    Splash, Welcome, Login, Signup, Home, ProductDetail, Cart, Checkout, Address, Payment, OrderPlaced, Tracking,
+    Orders, OrderDetail,
 }
+
+// Telas com a barra de navegação inferior e a aba que cada uma marca.
+private val TabScreens = mapOf(Screen.Home to MainTab.Home, Screen.Orders to MainTab.Orders)
 
 @Composable
 @Preview
@@ -52,6 +60,10 @@ fun App() {
     var productId by remember { mutableStateOf<String?>(null) }
     // Tela de onde o produto foi aberto, para o voltar retornar ao lugar certo.
     var productOrigin by remember { mutableStateOf(Screen.Home) }
+    // Mesma ideia para o carrinho (Home ou "Pedir novamente") e o acompanhamento.
+    var cartOrigin by remember { mutableStateOf(Screen.Home) }
+    var trackingOrigin by remember { mutableStateOf(Screen.OrderPlaced) }
+    var detailId by remember { mutableStateOf<Int?>(null) }
     // Mantém o estado da Home (categoria e scroll) ao abrir e voltar do produto.
     val stateHolder = rememberSaveableStateHolder()
     val snackbar = remember { SnackbarHostState() }
@@ -79,6 +91,20 @@ fun App() {
                 store.refreshOrder()
             }
         }
+    }
+
+    // Ao abrir as abas, atualiza os pedidos (lista e badge de "Pedidos").
+    LaunchedEffect(screen) {
+        if (screen in TabScreens) store.loadOrders()
+    }
+
+    fun openCart(from: Screen) {
+        cartOrigin = from
+        screen = Screen.Cart
+    }
+
+    fun reorder(id: Int, from: Screen) {
+        scope.launch { if (store.reorder(id)) openCart(from) }
     }
 
     fun openProduct(id: String, from: Screen) {
@@ -118,7 +144,7 @@ fun App() {
                         onToggleFavorite = store::toggleFavorite,
                         onAddToCart = { id -> store.addToCart(id, 1) },
                         onOpenProduct = { id -> openProduct(id, Screen.Home) },
-                        onOpenCart = { screen = Screen.Cart },
+                        onOpenCart = { openCart(Screen.Home) },
                         onOpenNotifications = {},
                         onOpenSearch = {},
                         products = store.products,
@@ -146,7 +172,7 @@ fun App() {
                         items = store.cart.items,
                         coupon = store.couponInput,
                         couponApplied = store.cart.couponApplied,
-                        onBack = { screen = Screen.Home },
+                        onBack = { screen = cartOrigin },
                         onClear = store::clearCart,
                         onChangeQuantity = store::changeQuantity,
                         onRemove = store::removeLine,
@@ -192,12 +218,47 @@ fun App() {
                     Screen.OrderPlaced -> store.order?.let { placed ->
                         OrderPlacedScreen(
                             order = placed,
-                            onTrackOrder = { screen = Screen.Tracking },
+                            onTrackOrder = {
+                                trackingOrigin = Screen.OrderPlaced
+                                screen = Screen.Tracking
+                            },
                             onBackHome = { screen = Screen.Home },
                         )
                     }
                     Screen.Tracking -> store.order?.let { tracked ->
-                        OrderTrackingScreen(order = tracked, onBack = { screen = Screen.OrderPlaced })
+                        OrderTrackingScreen(order = tracked, onBack = { screen = trackingOrigin })
+                    }
+                    Screen.Orders -> OrdersScreen(
+                        liveOrders = store.liveOrders,
+                        pastOrders = store.pastOrders,
+                        loading = store.ordersLoading,
+                        onOpenOrder = { id ->
+                            detailId = id
+                            store.loadOrderDetail(id)
+                            screen = Screen.OrderDetail
+                        },
+                        onTrackOrder = { id ->
+                            scope.launch {
+                                if (store.trackOrder(id)) {
+                                    trackingOrigin = Screen.Orders
+                                    screen = Screen.Tracking
+                                }
+                            }
+                        },
+                        onReorder = { id -> reorder(id, Screen.Orders) },
+                        onExplore = { screen = Screen.Home },
+                    )
+                    Screen.OrderDetail -> {
+                        val detail = store.orderDetail?.takeIf { it.id == detailId }
+                        if (detail == null) {
+                            Splash()
+                        } else {
+                            OrderDetailScreen(
+                                order = detail,
+                                onBack = { screen = Screen.Orders },
+                                onReorder = { if (store.reorder(detail.id)) openCart(Screen.OrderDetail) },
+                            )
+                        }
                     }
                 }
             }
