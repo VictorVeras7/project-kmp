@@ -9,7 +9,11 @@ import org.example.project.data.CartTotals
 import org.example.project.data.Courier
 import org.example.project.data.DeliveryAddress
 import org.example.project.data.Order
+import org.example.project.data.OrderDetail
+import org.example.project.data.OrderLine
+import org.example.project.data.OrderStatus
 import org.example.project.data.OrderStep
+import org.example.project.data.OrderSummary
 import org.example.project.data.PaymentMethod
 import org.example.project.data.PaymentOption
 import org.example.project.data.Product
@@ -96,6 +100,38 @@ fun OrderDto.toOrder(): Order {
         courier = courier?.let { Courier(it.name, it.vehicle) },
     )
 }
+
+private fun orderStatus(status: String) = when (status) {
+    "live" -> OrderStatus.Live
+    "cancel" -> OrderStatus.Cancelled
+    else -> OrderStatus.Done
+}
+
+fun OrderListItemDto.toSummary() = OrderSummary(
+    id = id,
+    code = code,
+    date = orderDate(createdAt),
+    status = orderStatus(status),
+    statusLabel = statusLabel,
+    itemCount = itemCount,
+    total = total,
+    itemsSummary = itemsSummary,
+    hue = thumbnail?.imageHue ?: 0f,
+)
+
+fun OrderDto.toDetail() = OrderDetail(
+    id = id,
+    code = code,
+    date = orderDate(createdAt),
+    status = orderStatus(status),
+    statusLabel = statusLabel,
+    items = items.map { OrderLine(it.name, it.restaurant, it.quantity, it.total, it.imageHue) },
+    address = address?.line.orEmpty(),
+    payment = MethodsByType[payment.type],
+    paymentLabel = payment.label,
+    totals = amounts?.let { CartTotals(it.subtotal, it.deliveryFee, it.discount) } ?: CartTotals(total, 0.0, 0.0),
+    couponCode = amounts?.couponCode,
+)
 
 // "2026-09-21T19:42:00.000Z" -> "16:42" no fuso do aparelho.
 private fun localTime(iso: String): String? = runCatching {
