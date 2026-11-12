@@ -217,3 +217,7 @@ data class OrderListItemDto(
 
 @Serializable
 data class ThumbnailDto(val imageHue: Float)
+
+// Resposta de POST /orders/:id/reorder: carrinho novo e produtos que não estão mais disponíveis.
+@Serializable
+data class ReorderDto(val cart: CartDto, val skippedProductIds: List<String> = emptyList())

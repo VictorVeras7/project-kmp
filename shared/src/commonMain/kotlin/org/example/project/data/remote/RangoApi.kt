@@ -140,7 +140,7 @@ class RangoApi(private val baseUrl: String = ApiBaseUrl) {
         }.data
 
     // Troca o carrinho pelos itens do pedido.
-    suspend fun reorder(id: Int): CartDto = call(HttpMethod.Post, "/orders/$id/reorder")
+    suspend fun reorder(id: Int): ReorderDto = call(HttpMethod.Post, "/orders/$id/reorder")
 
     // Infra
 

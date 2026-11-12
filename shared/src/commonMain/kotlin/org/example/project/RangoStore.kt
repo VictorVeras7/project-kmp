@@ -337,9 +337,14 @@ class RangoStore(private val api: RangoApi, private val scope: CoroutineScope) {
 
     // "Pedir novamente": o servidor troca o carrinho pelos itens do pedido.
     suspend fun reorder(id: Int): Boolean = safely {
-        setCart(api.reorder(id).toCart())
+        val result = api.reorder(id)
+        setCart(result.cart.toCart())
         couponInput = ""
-        message = "Itens adicionados ao carrinho."
+        message = if (result.skippedProductIds.isEmpty()) {
+            "Itens adicionados ao carrinho."
+        } else {
+            "Itens adicionados. Alguns produtos não estão mais disponíveis."
+        }
     } != null
 
     // Consulta o pedido atual; usado em polling enquanto ele está em andamento.
