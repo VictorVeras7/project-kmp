@@ -308,3 +308,35 @@ private fun EmptyOrders(title: String, onExplore: () -> Unit) {
         }
     }
 }
+
+@Preview
+@Composable
+private fun OrdersScreenPreview() {
+    RangoTheme(darkTheme = false) {
+        OrdersScreen(
+            liveOrders = SampleOrderHistory.filter { it.status == OrderStatus.Live },
+            pastOrders = SampleOrderHistory.filter { it.status != OrderStatus.Live },
+            loading = false,
+            onOpenOrder = {},
+            onTrackOrder = {},
+            onReorder = {},
+            onExplore = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun OrdersScreenEmptyDarkPreview() {
+    RangoTheme(darkTheme = true) {
+        OrdersScreen(
+            liveOrders = emptyList(),
+            pastOrders = emptyList(),
+            loading = false,
+            onOpenOrder = {},
+            onTrackOrder = {},
+            onReorder = {},
+            onExplore = {},
+        )
+    }
+}

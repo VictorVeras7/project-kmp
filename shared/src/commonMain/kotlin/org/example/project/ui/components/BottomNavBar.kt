@@ -112,3 +112,19 @@ private fun NavItem(tab: MainTab, active: Boolean, badge: Int?, onClick: () -> U
         }
     }
 }
+
+@Preview
+@Composable
+private fun BottomNavBarPreview() {
+    RangoTheme(darkTheme = false) {
+        BottomNavBar(selected = MainTab.Orders, onSelect = {}, badges = mapOf(MainTab.Orders to 1, MainTab.Favorites to 3))
+    }
+}
+
+@Preview
+@Composable
+private fun BottomNavBarDarkPreview() {
+    RangoTheme(darkTheme = true) {
+        BottomNavBar(selected = MainTab.Home, onSelect = {}, badges = mapOf(MainTab.Favorites to 2))
+    }
+}

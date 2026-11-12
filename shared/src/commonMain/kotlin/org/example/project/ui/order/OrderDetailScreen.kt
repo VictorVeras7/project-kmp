@@ -158,3 +158,19 @@ private fun ValueRow(label: String, value: String) {
         Text(value, color = MaterialTheme.colorScheme.onSurface, fontSize = 13.sp, fontWeight = FontWeight.Bold)
     }
 }
+
+@Preview
+@Composable
+private fun OrderDetailScreenPreview() {
+    RangoTheme(darkTheme = false) {
+        OrderDetailScreen(order = SampleOrderDetail, onBack = {}, onReorder = {})
+    }
+}
+
+@Preview
+@Composable
+private fun OrderDetailScreenDarkPreview() {
+    RangoTheme(darkTheme = true) {
+        OrderDetailScreen(order = SampleOrderDetail, onBack = {}, onReorder = {})
+    }
+}
