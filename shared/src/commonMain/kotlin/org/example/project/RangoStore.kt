@@ -5,8 +5,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.example.project.data.AddressForm
 import org.example.project.data.AnyDeliveryTime
@@ -40,6 +42,7 @@ import org.example.project.data.remote.toSummary
 import org.example.project.ui.signup.SignupData
 
 private val CouponErrors = setOf("INVALID_COUPON", "COUPON_MIN_SUBTOTAL")
+private const val SearchDebounceMs = 300L
 
 // Estado do app vindo do backend e as ações que conversam com ele.
 // As telas continuam recebendo modelos simples; aqui ficam as chamadas e o tratamento de erro.
@@ -90,6 +93,7 @@ class RangoStore(private val api: RangoApi, private val scope: CoroutineScope) {
         private set
     var suggestions by mutableStateOf(listOf<SearchSuggestion>())
         private set
+    private var searchJob: Job? = null
 
     // Mensagem de erro para o aviso na parte de baixo da tela; o App limpa depois de mostrar.
     var message by mutableStateOf<String?>(null)
@@ -163,6 +167,7 @@ class RangoStore(private val api: RangoApi, private val scope: CoroutineScope) {
         liveOrders = emptyList()
         pastOrders = emptyList()
         orderDetail = null
+        searchJob?.cancel()
         searchQuery = ""
         searchFilters = SearchFilters()
         searchResults = null
@@ -283,6 +288,48 @@ class RangoStore(private val api: RangoApi, private val scope: CoroutineScope) {
         val term = searchQuery.trim()
         if (term.isEmpty()) return
         launchSafely { recentSearches = api.addRecentSearch(term) }
+    }
+
+    fun clearRecentSearches() {
+        val previous = recentSearches
+        recentSearches = emptyList()
+        scope.launch {
+            try {
+                api.clearRecentSearches()
+            } catch (e: ApiException) {
+                recentSearches = previous
+                message = e.message
+            }
+        }
+    }
+
+    private fun runSearch(debounce: Boolean) {
+        searchJob?.cancel()
+        if (searchQuery.isBlank() && searchFilters.isDefault) {
+            searchResults = null
+            searching = false
+            return
+        }
+        searching = true
+        val query = searchQuery
+        val filters = searchFilters
+        searchJob = scope.launch {
+            if (debounce) delay(SearchDebounceMs)
+            safely {
+                val list = api.searchProducts(
+                    query = query,
+                    category = filters.category.takeIf { it != ProductCategories.first() }?.let { categorySlugs[it] ?: it },
+                    maxPrice = filters.maxPrice.takeIf { it != SearchMaxPrice },
+                    minRating = filters.minRating.takeIf { it > 0.0 },
+                    maxDeliveryTime = filters.maxTime.takeIf { it != AnyDeliveryTime },
+                    sort = filters.sort.apiValue,
+                )
+                // Também entra no catálogo local, para o detalhe do produto abrir na hora.
+                mergeProducts(list)
+                searchResults = list.map { it.toProduct() }
+            }
+            searching = false
+        }
     }
 
     // Carrinho
