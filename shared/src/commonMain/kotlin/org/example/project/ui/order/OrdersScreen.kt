@@ -133,7 +133,8 @@ private fun OrdersHeader(selected: OrdersTab, onSelect: (OrdersTab) -> Unit) {
                 OrdersTab.entries.forEach { tab ->
                     val active = tab == selected
                     Column(
-                        modifier = Modifier.clickable { onSelect(tab) },
+                        // Largura do texto, para o sublinhado acompanhar o rótulo.
+                        modifier = Modifier.width(IntrinsicSize.Max).clickable { onSelect(tab) },
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         Text(
@@ -142,6 +143,12 @@ private fun OrdersHeader(selected: OrdersTab, onSelect: (OrdersTab) -> Unit) {
                             fontSize = 13.5.sp,
                             fontWeight = if (active) FontWeight.ExtraBold else FontWeight.SemiBold,
                             modifier = Modifier.padding(bottom = 12.dp),
+                        )
+                        Box(
+                            Modifier
+                                .fillMaxWidth()
+                                .height(3.dp)
+                                .background(if (active) RangoColors.Primary else Color.Transparent, RoundedCornerShape(2.dp)),
                         )
                     }
                 }
