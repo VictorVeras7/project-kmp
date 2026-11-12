@@ -61,6 +61,8 @@ internal fun CheckoutScaffold(
     modifier: Modifier = Modifier,
     subtitle: String? = null,
     contentSpacing: Dp = 14.dp,
+    // Conteúdo à direita do título (ex.: status nos detalhes do pedido).
+    trailing: (@Composable () -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     // Fundo branco atrás da barra de status, igual ao cabeçalho; conteúdo em cinza claro.
@@ -72,7 +74,7 @@ internal fun CheckoutScaffold(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)),
         ) {
-            CheckoutHeader(title, subtitle, onBack)
+            CheckoutHeader(title, subtitle, onBack, trailing)
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -96,7 +98,7 @@ internal fun CheckoutScaffold(
 }
 
 @Composable
-private fun CheckoutHeader(title: String, subtitle: String?, onBack: () -> Unit) {
+private fun CheckoutHeader(title: String, subtitle: String?, onBack: () -> Unit, trailing: (@Composable () -> Unit)?) {
     Column(modifier = Modifier.background(MaterialTheme.colorScheme.surface)) {
         Row(
             modifier = Modifier
@@ -122,7 +124,7 @@ private fun CheckoutHeader(title: String, subtitle: String?, onBack: () -> Unit)
                     modifier = Modifier.size(21.dp),
                 )
             }
-            Column {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(title, color = MaterialTheme.colorScheme.onSurface, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
                 if (subtitle != null) {
                     Text(
@@ -134,6 +136,7 @@ private fun CheckoutHeader(title: String, subtitle: String?, onBack: () -> Unit)
                     )
                 }
             }
+            trailing?.invoke()
         }
         Divider()
     }
