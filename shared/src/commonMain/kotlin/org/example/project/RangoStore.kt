@@ -12,6 +12,8 @@ import org.example.project.data.AddressForm
 import org.example.project.data.Cart
 import org.example.project.data.DeliveryAddress
 import org.example.project.data.Order
+import org.example.project.data.OrderDetail
+import org.example.project.data.OrderSummary
 import org.example.project.data.PaymentOption
 import org.example.project.data.Product
 import org.example.project.data.SampleAddons
@@ -23,9 +25,11 @@ import org.example.project.data.remote.RegisterRequest
 import org.example.project.data.remote.toAddon
 import org.example.project.data.remote.toAddress
 import org.example.project.data.remote.toCart
+import org.example.project.data.remote.toDetail
 import org.example.project.data.remote.toOption
 import org.example.project.data.remote.toOrder
 import org.example.project.data.remote.toProduct
+import org.example.project.data.remote.toSummary
 import org.example.project.ui.signup.SignupData
 
 private val CouponErrors = setOf("INVALID_COUPON", "COUPON_MIN_SUBTOTAL")
@@ -53,6 +57,16 @@ class RangoStore(private val api: RangoApi, private val scope: CoroutineScope) {
         private set
     var payment by mutableStateOf<PaymentOption?>(null)
     var order by mutableStateOf<Order?>(null)
+        private set
+
+    // Meus pedidos: listas das duas abas e o pedido aberto nos detalhes.
+    var liveOrders by mutableStateOf(listOf<OrderSummary>())
+        private set
+    var pastOrders by mutableStateOf(listOf<OrderSummary>())
+        private set
+    var ordersLoading by mutableStateOf(false)
+        private set
+    var orderDetail by mutableStateOf<OrderDetail?>(null)
         private set
 
     // Mensagem de erro para o aviso na parte de baixo da tela; o App limpa depois de mostrar.
@@ -124,6 +138,9 @@ class RangoStore(private val api: RangoApi, private val scope: CoroutineScope) {
         payments = emptyList()
         payment = null
         order = null
+        liveOrders = emptyList()
+        pastOrders = emptyList()
+        orderDetail = null
     }
 
     // Carrega tudo o que a Home e o checkout precisam, em paralelo.
@@ -135,6 +152,8 @@ class RangoStore(private val api: RangoApi, private val scope: CoroutineScope) {
                 val cartDto = async { api.cart() }
                 val addressList = async { api.addresses() }
                 val paymentList = async { api.paymentMethods() }
+                // Pedidos em andamento: badge da aba "Pedidos".
+                val live = async { api.orders("live") }
 
                 val homeDto = home.await()
                 userName = homeDto.user.name
@@ -146,6 +165,7 @@ class RangoStore(private val api: RangoApi, private val scope: CoroutineScope) {
                 payments = paymentList.await().mapNotNull { it.toOption() }
                 payment = payment?.let { current -> payments.firstOrNull { it.id == current.id } } ?: payments.firstOrNull()
                 setCart(cartDto.await().toCart())
+                liveOrders = live.await().map { it.toSummary() }
             }
         }
     }
@@ -287,8 +307,40 @@ class RangoStore(private val api: RangoApi, private val scope: CoroutineScope) {
             // O servidor esvazia o carrinho ao criar o pedido.
             cart = Cart()
             couponInput = ""
+            loadOrders()
         } != null
     }
+
+    // Recarrega as duas abas de "Meus pedidos".
+    fun loadOrders() {
+        ordersLoading = true
+        scope.launch {
+            safely {
+                coroutineScope {
+                    val live = async { api.orders("live") }
+                    val past = async { api.orders("past") }
+                    liveOrders = live.await().map { it.toSummary() }
+                    pastOrders = past.await().map { it.toSummary() }
+                }
+            }
+            ordersLoading = false
+        }
+    }
+
+    fun loadOrderDetail(id: Int) {
+        if (orderDetail?.id != id) orderDetail = null
+        launchSafely { orderDetail = api.order(id).toDetail() }
+    }
+
+    // Abre o acompanhamento de um pedido do histórico.
+    suspend fun trackOrder(id: Int): Boolean = safely { order = api.order(id).toOrder() } != null
+
+    // "Pedir novamente": o servidor troca o carrinho pelos itens do pedido.
+    suspend fun reorder(id: Int): Boolean = safely {
+        setCart(api.reorder(id).toCart())
+        couponInput = ""
+        message = "Itens adicionados ao carrinho."
+    } != null
 
     // Consulta o pedido atual; usado em polling enquanto ele está em andamento.
     suspend fun refreshOrder() {
