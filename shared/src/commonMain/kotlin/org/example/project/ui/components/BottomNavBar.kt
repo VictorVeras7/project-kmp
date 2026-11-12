@@ -50,11 +50,14 @@ fun BottomNavBar(
     selected: MainTab,
     onSelect: (MainTab) -> Unit,
     modifier: Modifier = Modifier,
+    // Número no canto do ícone (pedidos em andamento, favoritos); sem número, sem badge.
+    badges: Map<MainTab, Int> = emptyMap(),
 ) {
     Column(
         modifier = modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.surface)
+            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal)),
     ) {
         Box(Modifier.fillMaxWidth().height(1.dp).background(MaterialTheme.colorScheme.outline))
         Row(
@@ -65,6 +68,7 @@ fun BottomNavBar(
                 NavItem(
                     tab = tab,
                     active = tab == selected,
+                    badge = badges[tab]?.takeIf { it > 0 },
                     onClick = { onSelect(tab) },
                     modifier = Modifier.weight(1f),
                 )
@@ -74,7 +78,7 @@ fun BottomNavBar(
 }
 
 @Composable
-private fun NavItem(tab: MainTab, active: Boolean, onClick: () -> Unit, modifier: Modifier) {
+private fun NavItem(tab: MainTab, active: Boolean, badge: Int?, onClick: () -> Unit, modifier: Modifier) {
     val color = if (active) RangoColors.Primary else MaterialTheme.colorScheme.onSurfaceVariant
     Box(
         modifier = modifier.clickable(
@@ -92,6 +96,19 @@ private fun NavItem(tab: MainTab, active: Boolean, onClick: () -> Unit, modifier
             val icon = if (tab == MainTab.Favorites && active) RangoIcons.HeartFilled else tab.icon
             Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(23.dp))
             Text(tab.label, color = color, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+        }
+        if (badge != null) {
+            Box(
+                modifier = Modifier
+                    .offset(x = 13.dp)
+                    .defaultMinSize(minWidth = 17.dp)
+                    .height(17.dp)
+                    .background(RangoColors.Primary, RoundedCornerShape(9.dp))
+                    .padding(horizontal = 4.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(badge.toString(), color = Color.White, fontSize = 9.5.sp, fontWeight = FontWeight.ExtraBold)
+            }
         }
     }
 }
