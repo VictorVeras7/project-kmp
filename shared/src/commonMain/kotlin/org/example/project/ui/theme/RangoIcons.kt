@@ -148,4 +148,7 @@ object RangoIcons {
             "A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6" +
             "l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z",
     )
+    val ChevronRight = icon("chevron_right", false, "M9 18l6-6-6-6")
+    val Replay = icon("replay", false, "M3 12a9 9 0 1 0 3-6.7L3 8", "M3 3v5h5")
+    val Flag = icon("flag", false, "M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z", "M4 22v-7")
 }
