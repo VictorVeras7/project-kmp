@@ -109,6 +109,7 @@ fun OrdersScreen(
                     loading -> Box(Modifier.fillMaxWidth().padding(top = 60.dp), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator(color = RangoColors.Primary)
                     }
+                    else -> EmptyOrders(title = tab.emptyTitle, onExplore = onExplore)
                 }
             }
         }
@@ -256,4 +257,54 @@ internal fun StatusChip(status: OrderStatus, label: String) {
             .background(color.copy(alpha = 0.12f), RoundedCornerShape(9.dp))
             .padding(horizontal = 10.dp, vertical = 5.dp),
     )
+}
+
+@Composable
+private fun EmptyOrders(title: String, onExplore: () -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 50.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(13.dp),
+    ) {
+        val borderColor = MaterialTheme.colorScheme.outline
+        Box(
+            modifier = Modifier
+                .size(96.dp)
+                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(32.dp))
+                .drawBehind {
+                    drawRoundRect(
+                        color = borderColor,
+                        cornerRadius = CornerRadius(32.dp.toPx()),
+                        style = Stroke(
+                            width = 1.dp.toPx(),
+                            pathEffect = PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 4.dp.toPx())),
+                        ),
+                    )
+                },
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(RangoIcons.Receipt, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(42.dp))
+        }
+        Text(title, color = MaterialTheme.colorScheme.onSurface, fontSize = 16.5.sp, fontWeight = FontWeight.ExtraBold)
+        Text(
+            "Quando você fizer um pedido, ele aparece aqui.",
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontSize = 13.sp,
+            lineHeight = 19.5.sp,
+            fontWeight = FontWeight.Medium,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.widthIn(max = 240.dp),
+        )
+        Button(
+            onClick = onExplore,
+            modifier = Modifier.padding(top = 4.dp),
+            shape = RoundedCornerShape(15.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+            ),
+        ) {
+            Text("Fazer um pedido", fontSize = 13.5.sp, fontWeight = FontWeight.Bold)
+        }
+    }
 }
