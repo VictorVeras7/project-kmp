@@ -211,6 +211,31 @@ private fun OrderCard(order: OrderSummary, onOpen: () -> Unit, onTrack: () -> Un
             }
             Icon(RangoIcons.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
         }
+        Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+            val buttonShape = RoundedCornerShape(14.dp)
+            if (order.status == OrderStatus.Live) {
+                Button(
+                    onClick = onTrack,
+                    modifier = Modifier.weight(1f).height(44.dp),
+                    shape = buttonShape,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                    ),
+                ) {
+                    Text("Acompanhar", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+            OutlinedButton(
+                onClick = onReorder,
+                modifier = Modifier.weight(1f).height(44.dp),
+                shape = buttonShape,
+                border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.outline),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface),
+            ) {
+                Text("Pedir novamente", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            }
+        }
     }
 }
 
