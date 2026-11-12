@@ -42,3 +42,11 @@ data class SearchFilters(
 data class SearchSuggestion(val label: String, val hint: String)
 
 fun resultsLabel(count: Int): String = if (count == 1) "1 resultado" else "$count resultados"
+
+val SampleRecentSearches = listOf("pizza", "açaí", "burger")
+
+val SampleSuggestions = listOf("p2", "p1", "p13", "p4").mapNotNull { id ->
+    SampleProducts.firstOrNull { it.id == id }?.let {
+        SearchSuggestion(it.name, "${it.restaurant} · ${formatRating(it.rating)} · ${formatMoney(it.price)}")
+    }
+}
