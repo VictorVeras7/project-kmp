@@ -161,6 +161,152 @@ fun SearchScreen(
 }
 
 @Composable
+private fun SearchHeader(
+    query: String,
+    filters: SearchFilters,
+    onQueryChange: (String) -> Unit,
+    onSubmit: () -> Unit,
+    onOpenFilters: () -> Unit,
+    onApplyFilters: (SearchFilters) -> Unit,
+) {
+    Column(modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface)) {
+        Column(
+            modifier = Modifier.padding(top = 6.dp, bottom = 13.dp),
+            verticalArrangement = Arrangement.spacedBy(11.dp),
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 18.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(9.dp),
+            ) {
+                SearchField(query, onQueryChange, onSubmit, Modifier.weight(1f))
+                FilterButton(count = filters.activeCount, onClick = onOpenFilters)
+            }
+            if (!filters.isDefault) ActiveFilterChips(filters, onApplyFilters)
+        }
+        Box(Modifier.fillMaxWidth().height(1.dp).background(MaterialTheme.colorScheme.outline))
+    }
+}
+
+@Composable
+private fun SearchField(query: String, onQueryChange: (String) -> Unit, onSubmit: () -> Unit, modifier: Modifier) {
+    val shape = RoundedCornerShape(15.dp)
+    val focus = LocalFocusManager.current
+    Row(
+        modifier = modifier
+            .height(48.dp)
+            .background(MaterialTheme.colorScheme.surfaceVariant, shape)
+            .border(1.5.dp, MaterialTheme.colorScheme.outline, shape)
+            .padding(horizontal = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(9.dp),
+    ) {
+        Icon(RangoIcons.Search, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+        BasicTextField(
+            value = query,
+            onValueChange = onQueryChange,
+            singleLine = true,
+            modifier = Modifier.weight(1f),
+            textStyle = TextStyle(color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp, fontWeight = FontWeight.SemiBold),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+            keyboardActions = KeyboardActions(onSearch = {
+                onSubmit()
+                focus.clearFocus()
+            }),
+            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+            decorationBox = { inner ->
+                Box {
+                    if (query.isEmpty()) {
+                        Text(
+                            "O que você quer comer hoje?",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 1,
+                        )
+                    }
+                    inner()
+                }
+            },
+        )
+        if (query.isNotEmpty()) {
+            Icon(
+                RangoIcons.Close,
+                contentDescription = "Limpar busca",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(19.dp).clickable { onQueryChange("") },
+            )
+        }
+    }
+}
+
+// Botão laranja de filtros, com o número de filtros ativos no canto.
+@Composable
+private fun FilterButton(count: Int, onClick: () -> Unit) {
+    Box(modifier = Modifier.size(48.dp)) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .clip(RoundedCornerShape(15.dp))
+                .background(RangoColors.Primary)
+                .clickable(onClick = onClick),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(RangoIcons.Tune, contentDescription = "Filtros", tint = Color.White, modifier = Modifier.size(22.dp))
+        }
+        if (count > 0) {
+            val surface = MaterialTheme.colorScheme.surface
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .offset(x = 4.dp, y = (-4).dp)
+                    .defaultMinSize(minWidth = 18.dp)
+                    .height(18.dp)
+                    .background(MaterialTheme.colorScheme.onSurface, RoundedCornerShape(9.dp))
+                    .border(2.dp, surface, RoundedCornerShape(9.dp)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(count.toString(), color = surface, fontSize = 10.sp, fontWeight = FontWeight.ExtraBold)
+            }
+        }
+    }
+}
+
+// Um chip por filtro ativo; tocar remove só aquele filtro.
+@Composable
+private fun ActiveFilterChips(filters: SearchFilters, onApply: (SearchFilters) -> Unit) {
+    val defaults = SearchFilters()
+    val chips = buildList {
+        if (filters.category != defaults.category) add(filters.category to filters.copy(category = defaults.category))
+        if (filters.maxPrice != SearchMaxPrice) add("até ${formatMoney(filters.maxPrice.toDouble())}" to filters.copy(maxPrice = SearchMaxPrice))
+        if (filters.minRating != 0.0) add("${formatRating(filters.minRating)}+ estrelas" to filters.copy(minRating = 0.0))
+        if (filters.maxTime != AnyDeliveryTime) add("até ${filters.maxTime} min" to filters.copy(maxTime = AnyDeliveryTime))
+        if (filters.sort != SearchSort.Relevance) add(filters.sort.shortLabel to filters.copy(sort = SearchSort.Relevance))
+    }
+    Row(
+        modifier = Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 18.dp),
+        horizontalArrangement = Arrangement.spacedBy(7.dp),
+    ) {
+        chips.forEach { (label, without) ->
+            val shape = RoundedCornerShape(11.dp)
+            Row(
+                modifier = Modifier
+                    .clip(shape)
+                    .background(RangoColors.Primary.copy(alpha = 0.1f), shape)
+                    .border(1.dp, RangoColors.Primary, shape)
+                    .clickable { onApply(without) }
+                    .padding(horizontal = 11.dp, vertical = 7.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(5.dp),
+            ) {
+                Text(label, color = RangoColors.Primary, fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
+                Icon(RangoIcons.Close, contentDescription = null, tint = RangoColors.Primary, modifier = Modifier.size(14.dp))
+            }
+        }
+    }
+}
+
+@Composable
 private fun Results(
     results: List<Product>,
     sort: SearchSort,
