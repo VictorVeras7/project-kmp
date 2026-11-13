@@ -77,6 +77,8 @@ import org.example.project.ui.theme.RangoColors
 import org.example.project.ui.theme.RangoIcons
 import org.example.project.ui.theme.RangoTheme
 
+private val Star = Color(0xFFF5A623)
+
 @Composable
 fun SearchScreen(
     query: String,
@@ -423,6 +425,102 @@ private fun Results(
                 onToggleFavorite = { onToggleFavorite(product.id) },
                 onAdd = { onAddToCart(product.id) },
             )
+        }
+    }
+}
+
+// Card horizontal dos resultados: foto, nome, restaurante e categoria, nota, tempo, preço e ações.
+@Composable
+private fun ResultCard(
+    product: Product,
+    isFavorite: Boolean,
+    onOpen: () -> Unit,
+    onToggleFavorite: () -> Unit,
+    onAdd: () -> Unit,
+) {
+    val shape = RoundedCornerShape(20.dp)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(2.dp, shape)
+            .background(MaterialTheme.colorScheme.surface, shape)
+            .border(1.dp, MaterialTheme.colorScheme.outline, shape)
+            .padding(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(13.dp),
+    ) {
+        Box(
+            Modifier
+                .size(84.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(Color.hsv(product.hue, 0.3f, 0.97f))
+                .clickable(onClick = onOpen),
+        )
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(
+                product.name,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontSize = 14.5.sp,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.clickable(onClick = onOpen),
+            )
+            Text(
+                "${product.restaurant} · ${product.category}",
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 11.5.sp,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Icon(RangoIcons.Star, contentDescription = null, tint = Star, modifier = Modifier.size(14.dp))
+                    Text(formatRating(product.rating), color = MaterialTheme.colorScheme.onSurface, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                }
+                Text(
+                    "${product.minMinutes}-${product.maxMinutes} min",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(formatMoney(product.price), color = RangoColors.Primary, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold)
+                Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                    val small = RoundedCornerShape(11.dp)
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(small)
+                            .background(MaterialTheme.colorScheme.surface, small)
+                            .border(1.dp, MaterialTheme.colorScheme.outline, small)
+                            .clickable(onClick = onToggleFavorite),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            if (isFavorite) RangoIcons.HeartFilled else RangoIcons.Heart,
+                            contentDescription = null,
+                            tint = if (isFavorite) RangoColors.Error else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(small)
+                            .background(RangoColors.Primary, small)
+                            .clickable(onClick = onAdd),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(RangoIcons.Plus, contentDescription = null, tint = Color.White, modifier = Modifier.size(19.dp))
+                    }
+                }
+            }
         }
     }
 }
