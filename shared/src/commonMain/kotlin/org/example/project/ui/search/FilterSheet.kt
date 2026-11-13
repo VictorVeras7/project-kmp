@@ -73,6 +73,8 @@ internal fun FilterSheet(
 ) {
     var draft by remember { mutableStateOf(initial) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    // Como no protótipo, a folha ocupa no máximo 90% da tela e não passa da barra de status.
+    val maxHeight = with(LocalDensity.current) { (LocalWindowInfo.current.containerSize.height * 0.9f).toDp() }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -91,7 +93,7 @@ internal fun FilterSheet(
         },
     ) {
         Column(
-            modifier = Modifier.padding(start = 18.dp, end = 18.dp, top = 14.dp, bottom = 18.dp),
+            modifier = Modifier.heightIn(max = maxHeight).padding(start = 18.dp, end = 18.dp, top = 14.dp, bottom = 18.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Row(
@@ -240,6 +242,30 @@ private fun PriceGroup(value: Int, onChange: (Int) -> Unit) {
             onValueChange = { onChange(it.roundToInt()) },
             valueRange = SearchMinPrice.toFloat()..SearchMaxPrice.toFloat(),
             steps = (SearchMaxPrice - SearchMinPrice) / SearchPriceStep - 1,
+            // Trilho fino e alça redonda, como o controle de faixa do protótipo.
+            thumb = {
+                Box(
+                    Modifier
+                        .size(20.dp)
+                        .shadow(2.dp, CircleShape)
+                        .background(RangoColors.Primary, CircleShape)
+                        .border(3.dp, Color.White, CircleShape),
+                )
+            },
+            track = { state ->
+                SliderDefaults.Track(
+                    sliderState = state,
+                    modifier = Modifier.height(5.dp),
+                    colors = SliderDefaults.colors(
+                        activeTrackColor = RangoColors.Primary,
+                        inactiveTrackColor = MaterialTheme.colorScheme.outline,
+                        activeTickColor = Color.Transparent,
+                        inactiveTickColor = Color.Transparent,
+                    ),
+                    drawStopIndicator = null,
+                    thumbTrackGapSize = 0.dp,
+                )
+            },
         )
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             PriceEdge("R$ $SearchMinPrice")
