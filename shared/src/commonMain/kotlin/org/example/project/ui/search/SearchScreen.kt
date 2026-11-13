@@ -524,3 +524,50 @@ private fun ResultCard(
         }
     }
 }
+
+@Composable
+private fun NoResults(onClearFilters: () -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 40.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        val borderColor = MaterialTheme.colorScheme.outline
+        Box(
+            modifier = Modifier
+                .size(96.dp)
+                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(32.dp))
+                .drawBehind {
+                    drawRoundRect(
+                        color = borderColor,
+                        cornerRadius = CornerRadius(32.dp.toPx()),
+                        style = Stroke(
+                            width = 1.dp.toPx(),
+                            pathEffect = PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 4.dp.toPx())),
+                        ),
+                    )
+                },
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(RangoIcons.SearchOff, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(42.dp))
+        }
+        Text("Nenhum produto encontrado.", color = MaterialTheme.colorScheme.onSurface, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
+        Text(
+            "Tente outro termo ou ajuste os filtros aplicados.",
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontSize = 13.sp,
+            lineHeight = 19.5.sp,
+            fontWeight = FontWeight.Medium,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.widthIn(max = 250.dp),
+        )
+        OutlinedButton(
+            onClick = onClearFilters,
+            modifier = Modifier.padding(top = 4.dp),
+            shape = RoundedCornerShape(14.dp),
+            border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.outline),
+        ) {
+            Text("Limpar filtros", color = MaterialTheme.colorScheme.onSurface, fontSize = 13.5.sp, fontWeight = FontWeight.Bold)
+        }
+    }
+}
