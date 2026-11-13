@@ -197,3 +197,28 @@ private fun FilterGroup(title: String, spacing: Dp = 9.dp, content: @Composable 
 private fun GroupTitle(text: String) {
     Text(text, color = MaterialTheme.colorScheme.onSurface, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold)
 }
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ChipFlow(content: @Composable () -> Unit) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(7.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+        content()
+    }
+}
+
+@Composable
+private fun FilterChip(label: String, selected: Boolean, onClick: () -> Unit) {
+    val shape = RoundedCornerShape(12.dp)
+    Text(
+        label,
+        color = if (selected) RangoColors.Primary else MaterialTheme.colorScheme.onSurfaceVariant,
+        fontSize = 12.5.sp,
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier
+            .clip(shape)
+            .background(if (selected) RangoColors.Primary.copy(alpha = 0.1f) else MaterialTheme.colorScheme.surfaceVariant, shape)
+            .border(1.dp, if (selected) RangoColors.Primary else MaterialTheme.colorScheme.outline, shape)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 9.dp),
+    )
+}
