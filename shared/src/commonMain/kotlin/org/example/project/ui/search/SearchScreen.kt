@@ -571,3 +571,72 @@ private fun NoResults(onClearFilters: () -> Unit) {
         }
     }
 }
+
+@Preview
+@Composable
+private fun SearchIdlePreview() {
+    RangoTheme(darkTheme = false) {
+        SearchScreen(
+            query = "",
+            filters = SearchFilters(),
+            results = null,
+            searching = false,
+            recentSearches = SampleRecentSearches,
+            suggestions = SampleSuggestions,
+            favoriteIds = emptySet(),
+            onQueryChange = {},
+            onSubmit = {},
+            onApplyFilters = {},
+            onClearRecent = {},
+            onOpenProduct = {},
+            onToggleFavorite = {},
+            onAddToCart = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun SearchResultsPreview() {
+    RangoTheme(darkTheme = false) {
+        SearchScreen(
+            query = "pizza",
+            filters = SearchFilters(category = ProductCategories[2], sort = SearchSort.PriceAsc),
+            results = SampleProducts.filter { it.category == ProductCategories[2] },
+            searching = false,
+            recentSearches = SampleRecentSearches,
+            suggestions = SampleSuggestions,
+            favoriteIds = setOf("p8"),
+            onQueryChange = {},
+            onSubmit = {},
+            onApplyFilters = {},
+            onClearRecent = {},
+            onOpenProduct = {},
+            onToggleFavorite = {},
+            onAddToCart = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun SearchEmptyDarkPreview() {
+    RangoTheme(darkTheme = true) {
+        SearchScreen(
+            query = "sushi",
+            filters = SearchFilters(maxPrice = 30),
+            results = emptyList(),
+            searching = false,
+            recentSearches = emptyList(),
+            suggestions = emptyList(),
+            favoriteIds = emptySet(),
+            onQueryChange = {},
+            onSubmit = {},
+            onApplyFilters = {},
+            onClearRecent = {},
+            onOpenProduct = {},
+            onToggleFavorite = {},
+            onAddToCart = {},
+        )
+    }
+}
