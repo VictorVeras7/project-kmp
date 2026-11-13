@@ -222,3 +222,33 @@ private fun FilterChip(label: String, selected: Boolean, onClick: () -> Unit) {
             .padding(horizontal = 14.dp, vertical = 9.dp),
     )
 }
+
+// "Faixa de preço": de R$ 10 a R$ 80, de 5 em 5.
+@Composable
+private fun PriceGroup(value: Int, onChange: (Int) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            GroupTitle("Faixa de preço")
+            Text("até ${formatMoney(value.toDouble())}", color = RangoColors.Primary, fontSize = 12.5.sp, fontWeight = FontWeight.ExtraBold)
+        }
+        Slider(
+            value = value.toFloat(),
+            onValueChange = { onChange(it.roundToInt()) },
+            valueRange = SearchMinPrice.toFloat()..SearchMaxPrice.toFloat(),
+            steps = (SearchMaxPrice - SearchMinPrice) / SearchPriceStep - 1,
+        )
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            PriceEdge("R$ $SearchMinPrice")
+            PriceEdge("R$ $SearchMaxPrice")
+        }
+    }
+}
+
+@Composable
+private fun PriceEdge(text: String) {
+    Text(text, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+}
