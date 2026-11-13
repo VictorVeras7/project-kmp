@@ -306,6 +306,97 @@ private fun ActiveFilterChips(filters: SearchFilters, onApply: (SearchFilters) -
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun IdleContent(
+    recentSearches: List<String>,
+    suggestions: List<SearchSuggestion>,
+    onPick: (String) -> Unit,
+    onClearRecent: () -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(11.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            SectionTitle("Buscas recentes")
+            if (recentSearches.isNotEmpty()) {
+                Text(
+                    "Limpar",
+                    color = RangoColors.Primary,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.clickable(onClick = onClearRecent),
+                )
+            }
+        }
+        if (recentSearches.isEmpty()) {
+            Text("Nenhuma busca recente.", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.5.sp, fontWeight = FontWeight.Medium)
+        } else {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                recentSearches.forEach { term ->
+                    val shape = RoundedCornerShape(12.dp)
+                    Row(
+                        modifier = Modifier
+                            .clip(shape)
+                            .background(MaterialTheme.colorScheme.surface, shape)
+                            .border(1.dp, MaterialTheme.colorScheme.outline, shape)
+                            .clickable { onPick(term) }
+                            .padding(horizontal = 12.dp, vertical = 9.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        Icon(RangoIcons.History, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
+                        Text(term, color = MaterialTheme.colorScheme.onSurface, fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold)
+                    }
+                }
+            }
+        }
+    }
+
+    if (suggestions.isNotEmpty()) {
+        Column(verticalArrangement = Arrangement.spacedBy(11.dp)) {
+            SectionTitle("Sugestões para você")
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                suggestions.forEach { SuggestionRow(it, onClick = { onPick(it.label) }) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SectionTitle(text: String) {
+    Text(text, color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold)
+}
+
+@Composable
+private fun SuggestionRow(suggestion: SearchSuggestion, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 11.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Box(
+            modifier = Modifier.size(36.dp).background(RangoColors.Primary.copy(alpha = 0.1f), RoundedCornerShape(12.dp)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(RangoIcons.TrendingUp, contentDescription = null, tint = RangoColors.Primary, modifier = Modifier.size(19.dp))
+        }
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+            Text(suggestion.label, color = MaterialTheme.colorScheme.onSurface, fontSize = 13.5.sp, fontWeight = FontWeight.Bold)
+            if (suggestion.hint.isNotEmpty()) {
+                Text(suggestion.hint, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp, fontWeight = FontWeight.Medium)
+            }
+        }
+        Icon(RangoIcons.ArrowUpRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
+    }
+}
+
 @Composable
 private fun Results(
     results: List<Product>,
