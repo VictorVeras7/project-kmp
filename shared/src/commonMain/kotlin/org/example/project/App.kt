@@ -2,8 +2,10 @@ package org.example.project
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -56,6 +58,7 @@ private enum class Screen {
 // Telas com a barra de navegação inferior e a aba que cada uma marca.
 private val TabScreens = mapOf(Screen.Home to MainTab.Home, Screen.Search to MainTab.Search, Screen.Orders to MainTab.Orders)
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 @Preview
 fun App() {
@@ -121,6 +124,8 @@ fun App() {
     }
 
     val tab = TabScreens[screen]
+    // Com o teclado aberto (digitando na busca), a barra inferior sai para dar espaço aos resultados.
+    val showNavBar = tab != null && !WindowInsets.isImeVisible
 
     RangoTheme {
         Box(Modifier.fillMaxSize()) {
@@ -298,7 +303,7 @@ fun App() {
                         }
                     }
                 }
-                if (tab != null) {
+                if (showNavBar && tab != null) {
                     BottomNavBar(
                         selected = tab,
                         onSelect = { selected ->
@@ -320,7 +325,7 @@ fun App() {
                     .align(Alignment.BottomCenter)
                     .windowInsetsPadding(WindowInsets.safeDrawing)
                     // Nas abas, o aviso aparece acima da barra inferior.
-                    .padding(bottom = if (tab != null) 64.dp else 0.dp),
+                    .padding(bottom = if (showNavBar) 64.dp else 0.dp),
             )
         }
     }
