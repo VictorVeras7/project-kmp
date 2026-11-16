@@ -84,7 +84,38 @@ class RangoApi(private val baseUrl: String = ApiBaseUrl) {
             parameter("pageSize", 50)
         }.data
 
+    // Busca com filtros; parâmetros nulos ficam de fora (sem filtro).
+    suspend fun searchProducts(
+        query: String,
+        category: String?,
+        maxPrice: Int?,
+        minRating: Double?,
+        maxDeliveryTime: Int?,
+        sort: String,
+    ): List<ProductDto> = call<ListResponse<ProductDto>>(HttpMethod.Get, "/products") {
+        if (query.isNotBlank()) parameter("q", query.trim())
+        category?.let { parameter("category", it) }
+        maxPrice?.let { parameter("maxPrice", it) }
+        minRating?.let { parameter("minRating", it) }
+        maxDeliveryTime?.let { parameter("maxDeliveryTime", it) }
+        parameter("sort", sort)
+        parameter("pageSize", 50)
+    }.data
+
     suspend fun product(id: String): ProductDto = call(HttpMethod.Get, "/products/$id")
+
+    // Busca: sugestões (sem termo = mais pedidos) e pesquisas recentes da conta.
+
+    suspend fun searchSuggestions(): List<String> = call<ListResponse<String>>(HttpMethod.Get, "/search/suggestions").data
+
+    suspend fun recentSearches(): List<String> = call<ListResponse<String>>(HttpMethod.Get, "/search/recent").data
+
+    suspend fun addRecentSearch(term: String): List<String> =
+        call<ListResponse<String>>(HttpMethod.Post, "/search/recent") { jsonBody(RecentSearchRequest(term.trim())) }.data
+
+    suspend fun clearRecentSearches() {
+        call<Unit>(HttpMethod.Delete, "/search/recent")
+    }
 
     suspend fun setFavorite(productId: String, favorite: Boolean) {
         call<Unit>(if (favorite) HttpMethod.Put else HttpMethod.Delete, "/favorites/$productId")

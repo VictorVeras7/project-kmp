@@ -47,18 +47,21 @@ import org.example.project.data.Product
 import org.example.project.data.ProductCategories
 import org.example.project.data.ProductTag
 import org.example.project.data.SampleProducts
+import org.example.project.data.SearchFilters
+import org.example.project.data.SearchSort
 import org.example.project.ui.components.ProductCard
 import org.example.project.ui.theme.RangoColors
 import org.example.project.ui.theme.RangoIcons
 import org.example.project.ui.theme.RangoTheme
 
-private data class HomeSection(val title: String, val tag: ProductTag)
+// "Ver tudo" abre a busca com os filtros de cada seção, como no protótipo.
+private data class HomeSection(val title: String, val tag: ProductTag, val seeAll: SearchFilters)
 
 private val HomeSections = listOf(
-    HomeSection("Ofertas para você", ProductTag.Offer),
-    HomeSection("Mais pedidos", ProductTag.Popular),
-    HomeSection("Recomendados", ProductTag.Recommended),
-    HomeSection("Entrega rápida", ProductTag.Fast),
+    HomeSection("Ofertas para você", ProductTag.Offer, SearchFilters(sort = SearchSort.PriceAsc)),
+    HomeSection("Mais pedidos", ProductTag.Popular, SearchFilters(sort = SearchSort.Rating)),
+    HomeSection("Recomendados", ProductTag.Recommended, SearchFilters(minRating = 4.5, sort = SearchSort.Rating)),
+    HomeSection("Entrega rápida", ProductTag.Fast, SearchFilters(maxTime = 30)),
 )
 
 @Composable
@@ -77,6 +80,7 @@ fun HomeScreen(
     products: List<Product> = SampleProducts,
     // Avisa a troca de categoria, para o App buscar os produtos dela no servidor.
     onCategoryChange: (String) -> Unit = {},
+    onSeeAll: (SearchFilters) -> Unit = {},
 ) {
     var category by rememberSaveable { mutableStateOf(ProductCategories.first()) }
 
@@ -108,7 +112,15 @@ fun HomeScreen(
                     HomeSections.forEach { section ->
                         val items = products.filter { section.tag in it.tags }
                         if (items.isNotEmpty()) {
-                            ProductRail(section.title, items, favoriteIds, onToggleFavorite, onAddToCart, onOpenProduct)
+                            ProductRail(
+                                title = section.title,
+                                items = items,
+                                favoriteIds = favoriteIds,
+                                onToggleFavorite = onToggleFavorite,
+                                onAddToCart = onAddToCart,
+                                onOpenProduct = onOpenProduct,
+                                onSeeAll = { onSeeAll(section.seeAll) },
+                            )
                         }
                     }
                 } else {
@@ -300,15 +312,23 @@ private fun ProductRail(
     onToggleFavorite: (String) -> Unit,
     onAddToCart: (String) -> Unit,
     onOpenProduct: (String) -> Unit,
+    onSeeAll: () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(
-            title,
-            color = MaterialTheme.colorScheme.onBackground,
-            fontSize = 17.sp,
-            fontWeight = FontWeight.ExtraBold,
-            modifier = Modifier.padding(horizontal = 18.dp),
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp),
+            verticalAlignment = Alignment.Bottom,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(title, color = MaterialTheme.colorScheme.onBackground, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
+            Text(
+                "Ver tudo",
+                color = RangoColors.Primary,
+                fontSize = 12.5.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.clickable(onClick = onSeeAll),
+            )
+        }
         LazyRow(
             contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 18.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),

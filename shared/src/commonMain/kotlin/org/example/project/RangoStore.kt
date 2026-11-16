@@ -5,11 +5,20 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.example.project.data.AddressForm
+import org.example.project.data.AnyDeliveryTime
 import org.example.project.data.Cart
+import org.example.project.data.ProductCategories
+import org.example.project.data.SearchFilters
+import org.example.project.data.SearchMaxPrice
+import org.example.project.data.SearchSuggestion
+import org.example.project.data.formatMoney
+import org.example.project.data.formatRating
 import org.example.project.data.DeliveryAddress
 import org.example.project.data.Order
 import org.example.project.data.OrderDetail
@@ -33,6 +42,7 @@ import org.example.project.data.remote.toSummary
 import org.example.project.ui.signup.SignupData
 
 private val CouponErrors = setOf("INVALID_COUPON", "COUPON_MIN_SUBTOTAL")
+private const val SearchDebounceMs = 300L
 
 // Estado do app vindo do backend e as ações que conversam com ele.
 // As telas continuam recebendo modelos simples; aqui ficam as chamadas e o tratamento de erro.
@@ -68,6 +78,22 @@ class RangoStore(private val api: RangoApi, private val scope: CoroutineScope) {
         private set
     var orderDetail by mutableStateOf<OrderDetail?>(null)
         private set
+
+    // Busca: termo e filtros ficam aqui para sobreviver à ida ao produto e à volta.
+    var searchQuery by mutableStateOf("")
+        private set
+    var searchFilters by mutableStateOf(SearchFilters())
+        private set
+    // null = nada buscado ainda (termo vazio e sem filtros): a tela mostra recentes e sugestões.
+    var searchResults by mutableStateOf<List<Product>?>(null)
+        private set
+    var searching by mutableStateOf(false)
+        private set
+    var recentSearches by mutableStateOf(listOf<String>())
+        private set
+    var suggestions by mutableStateOf(listOf<SearchSuggestion>())
+        private set
+    private var searchJob: Job? = null
 
     // Mensagem de erro para o aviso na parte de baixo da tela; o App limpa depois de mostrar.
     var message by mutableStateOf<String?>(null)
@@ -141,6 +167,13 @@ class RangoStore(private val api: RangoApi, private val scope: CoroutineScope) {
         liveOrders = emptyList()
         pastOrders = emptyList()
         orderDetail = null
+        searchJob?.cancel()
+        searchQuery = ""
+        searchFilters = SearchFilters()
+        searchResults = null
+        searching = false
+        recentSearches = emptyList()
+        suggestions = emptyList()
     }
 
     // Carrega tudo o que a Home e o checkout precisam, em paralelo.
@@ -213,6 +246,90 @@ class RangoStore(private val api: RangoApi, private val scope: CoroutineScope) {
         val favorites = list.filter { it.isFavorite }.map { it.id }.toSet()
         val notFavorites = list.filterNot { it.isFavorite }.map { it.id }.toSet()
         favoriteIds = favoriteIds - notFavorites + favorites
+    }
+
+    // Busca
+
+    // Abertura da tela: buscas recentes e sugestões ("mais pedidos").
+    fun loadSearchHome() {
+        launchSafely {
+            coroutineScope {
+                val recent = async { api.recentSearches() }
+                val names = async { api.searchSuggestions() }
+                recentSearches = recent.await()
+                suggestions = names.await().take(4).map { name ->
+                    val product = products.firstOrNull { it.name == name }
+                    val hint = product?.let { "${it.restaurant} · ${formatRating(it.rating)} · ${formatMoney(it.price)}" }
+                    SearchSuggestion(name, hint.orEmpty())
+                }
+            }
+        }
+    }
+
+    // Digitação: espera o usuário parar de digitar antes de buscar.
+    fun changeQuery(text: String) {
+        searchQuery = text
+        runSearch(debounce = true)
+    }
+
+    fun applyFilters(filters: SearchFilters) {
+        searchFilters = filters
+        runSearch(debounce = false)
+    }
+
+    // "Ver tudo" da Home: abre a busca sem termo e com os filtros da seção.
+    fun startSearch(filters: SearchFilters) {
+        searchQuery = ""
+        applyFilters(filters)
+    }
+
+    // Termo confirmado (teclado ou produto aberto dos resultados) entra nas buscas recentes.
+    fun saveRecentSearch() {
+        val term = searchQuery.trim()
+        if (term.isEmpty()) return
+        launchSafely { recentSearches = api.addRecentSearch(term) }
+    }
+
+    fun clearRecentSearches() {
+        val previous = recentSearches
+        recentSearches = emptyList()
+        scope.launch {
+            try {
+                api.clearRecentSearches()
+            } catch (e: ApiException) {
+                recentSearches = previous
+                message = e.message
+            }
+        }
+    }
+
+    private fun runSearch(debounce: Boolean) {
+        searchJob?.cancel()
+        if (searchQuery.isBlank() && searchFilters.isDefault) {
+            searchResults = null
+            searching = false
+            return
+        }
+        searching = true
+        val query = searchQuery
+        val filters = searchFilters
+        searchJob = scope.launch {
+            if (debounce) delay(SearchDebounceMs)
+            safely {
+                val list = api.searchProducts(
+                    query = query,
+                    category = filters.category.takeIf { it != ProductCategories.first() }?.let { categorySlugs[it] ?: it },
+                    maxPrice = filters.maxPrice.takeIf { it != SearchMaxPrice },
+                    minRating = filters.minRating.takeIf { it > 0.0 },
+                    maxDeliveryTime = filters.maxTime.takeIf { it != AnyDeliveryTime },
+                    sort = filters.sort.apiValue,
+                )
+                // Também entra no catálogo local, para o detalhe do produto abrir na hora.
+                mergeProducts(list)
+                searchResults = list.map { it.toProduct() }
+            }
+            searching = false
+        }
     }
 
     // Carrinho

@@ -2,8 +2,10 @@ package org.example.project
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -42,6 +44,7 @@ import org.example.project.ui.order.OrderPlacedScreen
 import org.example.project.ui.order.OrderTrackingScreen
 import org.example.project.ui.order.OrdersScreen
 import org.example.project.ui.product.ProductDetailScreen
+import org.example.project.ui.search.SearchScreen
 import org.example.project.ui.signup.SignupScreen
 import org.example.project.ui.theme.RangoColors
 import org.example.project.ui.theme.RangoTheme
@@ -49,12 +52,13 @@ import org.example.project.ui.welcome.WelcomeScreen
 
 private enum class Screen {
     Splash, Welcome, Login, Signup, Home, ProductDetail, Cart, Checkout, Address, Payment, OrderPlaced, Tracking,
-    Orders, OrderDetail,
+    Orders, OrderDetail, Search,
 }
 
 // Telas com a barra de navegação inferior e a aba que cada uma marca.
-private val TabScreens = mapOf(Screen.Home to MainTab.Home, Screen.Orders to MainTab.Orders)
+private val TabScreens = mapOf(Screen.Home to MainTab.Home, Screen.Search to MainTab.Search, Screen.Orders to MainTab.Orders)
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 @Preview
 fun App() {
@@ -100,6 +104,7 @@ fun App() {
     // Ao abrir as abas, atualiza os pedidos (lista e badge de "Pedidos").
     LaunchedEffect(screen) {
         if (screen in TabScreens) store.loadOrders()
+        if (screen == Screen.Search) store.loadSearchHome()
     }
 
     fun openCart(from: Screen) {
@@ -119,6 +124,8 @@ fun App() {
     }
 
     val tab = TabScreens[screen]
+    // Com o teclado aberto (digitando na busca), a barra inferior sai para dar espaço aos resultados.
+    val showNavBar = tab != null && !WindowInsets.isImeVisible
 
     RangoTheme {
         Box(Modifier.fillMaxSize()) {
@@ -154,9 +161,34 @@ fun App() {
                                 onOpenProduct = { id -> openProduct(id, Screen.Home) },
                                 onOpenCart = { openCart(Screen.Home) },
                                 onOpenNotifications = {},
-                                onOpenSearch = {},
+                                onOpenSearch = { screen = Screen.Search },
                                 products = store.products,
                                 onCategoryChange = store::loadCategory,
+                                onSeeAll = { filters ->
+                                    store.startSearch(filters)
+                                    screen = Screen.Search
+                                },
+                            )
+                            Screen.Search -> SearchScreen(
+                                query = store.searchQuery,
+                                filters = store.searchFilters,
+                                results = store.searchResults,
+                                searching = store.searching,
+                                recentSearches = store.recentSearches,
+                                suggestions = store.suggestions,
+                                favoriteIds = store.favoriteIds,
+                                onQueryChange = store::changeQuery,
+                                onSubmit = store::saveRecentSearch,
+                                onApplyFilters = store::applyFilters,
+                                onFiltersApplied = { store.message = "Filtros aplicados." },
+                                onClearRecent = store::clearRecentSearches,
+                                onOpenProduct = { id ->
+                                    // Abrir um resultado também guarda o termo nas buscas recentes.
+                                    store.saveRecentSearch()
+                                    openProduct(id, Screen.Search)
+                                },
+                                onToggleFavorite = store::toggleFavorite,
+                                onAddToCart = { id -> store.addToCart(id, 1) },
                             )
                             Screen.ProductDetail -> {
                                 val product = store.products.firstOrNull { it.id == productId }
@@ -271,14 +303,15 @@ fun App() {
                         }
                     }
                 }
-                if (tab != null) {
+                if (showNavBar && tab != null) {
                     BottomNavBar(
                         selected = tab,
                         onSelect = { selected ->
                             when (selected) {
                                 MainTab.Home -> screen = Screen.Home
+                                MainTab.Search -> screen = Screen.Search
                                 MainTab.Orders -> screen = Screen.Orders
-                                // Busca, favoritos e perfil ficam para as próximas issues.
+                                // Favoritos e perfil ficam para as próximas issues.
                                 else -> store.message = "${selected.label} estará disponível em breve."
                             }
                         },
@@ -292,7 +325,7 @@ fun App() {
                     .align(Alignment.BottomCenter)
                     .windowInsetsPadding(WindowInsets.safeDrawing)
                     // Nas abas, o aviso aparece acima da barra inferior.
-                    .padding(bottom = if (tab != null) 64.dp else 0.dp),
+                    .padding(bottom = if (showNavBar) 64.dp else 0.dp),
             )
         }
     }

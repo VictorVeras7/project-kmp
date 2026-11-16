@@ -151,4 +151,17 @@ object RangoIcons {
     val ChevronRight = icon("chevron_right", false, "M9 18l6-6-6-6")
     val Replay = icon("replay", false, "M3 12a9 9 0 1 0 3-6.7L3 8", "M3 3v5h5")
     val Flag = icon("flag", false, "M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z", "M4 22v-7")
+    val Close = icon("close", false, "M18 6L6 18", "M6 6l12 12")
+    val Tune = icon(
+        "tune", false,
+        "M21 4h-7", "M10 4H3", "M21 12h-9", "M8 12H3", "M21 20h-5", "M12 20H3",
+        "M14 2v4", "M8 10v4", "M16 18v4",
+    )
+    val History = icon("history", false, "M3 12a9 9 0 1 0 3-6.7L3 8", "M3 3v5h5", "M12 7v5l4 2")
+    val TrendingUp = icon("trending_up", false, "M22 7l-8.5 8.5-5-5L2 17", "M16 7h6v6")
+    val ArrowUpRight = icon("arrow_up_right", false, "M7 7h10v10", "M7 17L17 7")
+    val SearchOff = icon(
+        "search_off", false,
+        "M21 21l-4.35-4.35", "M19 11a8 8 0 1 1-16 0 8 8 0 0 1 16 0z", "M13.5 8.5l-5 5", "M8.5 8.5l5 5",
+    )
 }
