@@ -195,3 +195,53 @@ private fun FavoriteCard(product: Product, onOpen: () -> Unit, onRemove: () -> U
         }
     }
 }
+
+@Composable
+private fun EmptyFavorites(onExplore: () -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 50.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(13.dp),
+    ) {
+        val borderColor = MaterialTheme.colorScheme.outline
+        Box(
+            modifier = Modifier
+                .size(96.dp)
+                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(32.dp))
+                .drawBehind {
+                    drawRoundRect(
+                        color = borderColor,
+                        cornerRadius = CornerRadius(32.dp.toPx()),
+                        style = Stroke(
+                            width = 1.dp.toPx(),
+                            pathEffect = PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 4.dp.toPx())),
+                        ),
+                    )
+                },
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(RangoIcons.Heart, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(42.dp))
+        }
+        Text("Nenhum favorito ainda", color = MaterialTheme.colorScheme.onSurface, fontSize = 16.5.sp, fontWeight = FontWeight.ExtraBold)
+        Text(
+            "Toque no coração dos pratos que você ama para encontrá-los rápido aqui.",
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontSize = 13.sp,
+            lineHeight = 19.5.sp,
+            fontWeight = FontWeight.Medium,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.widthIn(max = 250.dp),
+        )
+        Button(
+            onClick = onExplore,
+            modifier = Modifier.padding(top = 4.dp),
+            shape = RoundedCornerShape(15.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+            ),
+        ) {
+            Text("Explorar produtos", fontSize = 13.5.sp, fontWeight = FontWeight.Bold)
+        }
+    }
+}
