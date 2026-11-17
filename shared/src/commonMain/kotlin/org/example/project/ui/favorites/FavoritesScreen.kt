@@ -125,3 +125,73 @@ private fun FavoritesHeader(count: Int) {
         Box(Modifier.fillMaxWidth().height(1.dp).background(MaterialTheme.colorScheme.outline))
     }
 }
+
+// Card do favorito: foto, nome com o coração para remover, restaurante e categoria, preço e "Adicionar".
+@Composable
+private fun FavoriteCard(product: Product, onOpen: () -> Unit, onRemove: () -> Unit, onAdd: () -> Unit) {
+    val shape = RoundedCornerShape(20.dp)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(2.dp, shape)
+            .background(MaterialTheme.colorScheme.surface, shape)
+            .border(1.dp, MaterialTheme.colorScheme.outline, shape)
+            .padding(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(13.dp),
+    ) {
+        Box(
+            Modifier
+                .size(84.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(Color.hsv(product.hue, 0.3f, 0.97f))
+                .clickable(onClick = onOpen),
+        )
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    product.name,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontSize = 14.5.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f).clickable(onClick = onOpen),
+                )
+                Icon(
+                    RangoIcons.HeartFilled,
+                    contentDescription = "Remover dos favoritos",
+                    tint = RangoColors.Error,
+                    modifier = Modifier.size(21.dp).clip(RoundedCornerShape(6.dp)).clickable(onClick = onRemove),
+                )
+            }
+            Text(
+                "${product.restaurant} · ${product.category}",
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 11.5.sp,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(top = 3.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(formatMoney(product.price), color = RangoColors.Primary, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold)
+                Button(
+                    onClick = onAdd,
+                    modifier = Modifier.height(34.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    contentPadding = PaddingValues(horizontal = 13.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                    ),
+                ) {
+                    Icon(RangoIcons.CartPlus, contentDescription = null, modifier = Modifier.size(17.dp))
+                    Text("Adicionar", fontSize = 12.5.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 6.dp))
+                }
+            }
+        }
+    }
+}
