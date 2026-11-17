@@ -62,6 +62,13 @@ object RangoIcons {
         "M20 21a1 1 0 1 1-2 0 1 1 0 0 1 2 0z",
         "M2 2h2l2.7 12.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L22 7H5.1",
     )
+    val CartPlus = icon(
+        "cart_plus", false,
+        "M9 21a1 1 0 1 1-2 0 1 1 0 0 1 2 0z",
+        "M20 21a1 1 0 1 1-2 0 1 1 0 0 1 2 0z",
+        "M2 2h2l2.7 12.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L22 7H5.1",
+        "M13.5 9v3.5", "M11.75 10.75h3.5",
+    )
     val CartOff = icon(
         "cart_off", false,
         "M9 21a1 1 0 1 1-2 0 1 1 0 0 1 2 0z",
