@@ -245,3 +245,33 @@ private fun EmptyFavorites(onExplore: () -> Unit) {
         }
     }
 }
+
+@Preview
+@Composable
+private fun FavoritesScreenPreview() {
+    RangoTheme(darkTheme = false) {
+        FavoritesScreen(
+            favorites = SampleProducts.filter { it.id in setOf("p5", "p2", "p8") },
+            loading = false,
+            onOpenProduct = {},
+            onToggleFavorite = {},
+            onAddToCart = {},
+            onExplore = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun FavoritesScreenEmptyDarkPreview() {
+    RangoTheme(darkTheme = true) {
+        FavoritesScreen(
+            favorites = emptyList(),
+            loading = false,
+            onOpenProduct = {},
+            onToggleFavorite = {},
+            onAddToCart = {},
+            onExplore = {},
+        )
+    }
+}
