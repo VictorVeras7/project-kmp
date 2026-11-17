@@ -98,3 +98,30 @@ fun FavoritesScreen(
 }
 
 private fun savedLabel(count: Int): String = if (count == 1) "1 item salvo" else "$count itens salvos"
+
+@Composable
+private fun FavoritesHeader(count: Int) {
+    Column(modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface)) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(start = 18.dp, end = 18.dp, top = 8.dp, bottom = 14.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(
+                "Favoritos",
+                color = MaterialTheme.colorScheme.onSurface,
+                fontSize = 21.sp,
+                fontWeight = FontWeight.ExtraBold,
+                letterSpacing = (-0.6).sp,
+                modifier = Modifier.alignByBaseline(),
+            )
+            Text(
+                savedLabel(count),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 12.5.sp,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.alignByBaseline(),
+            )
+        }
+        Box(Modifier.fillMaxWidth().height(1.dp).background(MaterialTheme.colorScheme.outline))
+    }
+}
