@@ -239,7 +239,15 @@ class RangoStore(private val api: RangoApi, private val scope: CoroutineScope) {
                 message = e.message
             }
         }
+        message = if (favorite) "Adicionado aos favoritos." else "Removido dos favoritos."
     }
+
+    // Lista da tela "Favoritos": os mais recentes primeiro.
+    val favorites: List<Product>
+        get() {
+            val byId = products.associateBy { it.id }
+            return favoriteIds.reversed().mapNotNull { byId[it] }
+        }
 
     fun loadFavorites() {
         favoritesLoading = true
