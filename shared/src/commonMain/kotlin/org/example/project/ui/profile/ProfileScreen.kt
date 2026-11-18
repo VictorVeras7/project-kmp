@@ -97,3 +97,30 @@ fun ProfileScreen(
         }
     }
 }
+
+private class ProfileRow(
+    val icon: ImageVector,
+    val label: String,
+    val hint: String = "",
+    val danger: Boolean = false,
+    val onClick: () -> Unit,
+)
+
+private fun addressesHint(count: Int): String = when (count) {
+    0 -> "nenhum salvo"
+    1 -> "1 salvo"
+    else -> "$count salvos"
+}
+
+private fun paymentsHint(count: Int): String = when (count) {
+    0 -> ""
+    1 -> "1 método disponível"
+    else -> "$count métodos disponíveis"
+}
+
+private fun unreadHint(count: Int): String = when (count) {
+    0 -> "tudo lido"
+    1 -> "1 não lida"
+    else -> "$count não lidas"
+}
+
