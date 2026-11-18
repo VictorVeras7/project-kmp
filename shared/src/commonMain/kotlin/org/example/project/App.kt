@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.example.project.data.OrderPollIntervalMs
+import org.example.project.data.UserProfile
 import org.example.project.data.itemCount
 import org.example.project.data.remote.RangoApi
 import org.example.project.ui.cart.CartScreen
@@ -45,6 +46,7 @@ import org.example.project.ui.order.OrderPlacedScreen
 import org.example.project.ui.order.OrderTrackingScreen
 import org.example.project.ui.order.OrdersScreen
 import org.example.project.ui.product.ProductDetailScreen
+import org.example.project.ui.profile.ProfileScreen
 import org.example.project.ui.search.SearchScreen
 import org.example.project.ui.signup.SignupScreen
 import org.example.project.ui.theme.RangoColors
@@ -53,7 +55,7 @@ import org.example.project.ui.welcome.WelcomeScreen
 
 private enum class Screen {
     Splash, Welcome, Login, Signup, Home, ProductDetail, Cart, Checkout, Address, Payment, OrderPlaced, Tracking,
-    Orders, OrderDetail, Search, Favorites,
+    Orders, OrderDetail, Search, Favorites, Profile,
 }
 
 // Telas com a barra de navegação inferior e a aba que cada uma marca.
@@ -62,6 +64,7 @@ private val TabScreens = mapOf(
     Screen.Search to MainTab.Search,
     Screen.Orders to MainTab.Orders,
     Screen.Favorites to MainTab.Favorites,
+    Screen.Profile to MainTab.Profile,
 )
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -77,6 +80,8 @@ fun App() {
     // Mesma ideia para o carrinho (Home ou "Pedir novamente") e o acompanhamento.
     var cartOrigin by remember { mutableStateOf(Screen.Home) }
     var trackingOrigin by remember { mutableStateOf(Screen.OrderPlaced) }
+    // Endereços e pagamento abrem do checkout ou do perfil.
+    var accountOrigin by remember { mutableStateOf(Screen.Checkout) }
     var detailId by remember { mutableStateOf<Int?>(null) }
     // Mantém o estado da Home (categoria e scroll) ao abrir e voltar do produto.
     val stateHolder = rememberSaveableStateHolder()
@@ -112,11 +117,21 @@ fun App() {
         if (screen in TabScreens) store.loadOrders()
         if (screen == Screen.Search) store.loadSearchHome()
         if (screen == Screen.Favorites) store.loadFavorites()
+        if (screen == Screen.Profile) store.loadProfile()
     }
 
     fun openCart(from: Screen) {
         cartOrigin = from
         screen = Screen.Cart
+    }
+
+    fun openAccountScreen(target: Screen, from: Screen) {
+        accountOrigin = from
+        screen = target
+    }
+
+    fun comingSoon(feature: String) {
+        store.message = "$feature estará disponível em breve."
     }
 
     fun reorder(id: Int, from: Screen) {
@@ -238,8 +253,8 @@ fun App() {
                                 address = store.selectedAddress,
                                 payment = store.payment,
                                 onBack = { screen = Screen.Cart },
-                                onChangeAddress = { screen = Screen.Address },
-                                onChangePayment = { screen = Screen.Payment },
+                                onChangeAddress = { openAccountScreen(Screen.Address, Screen.Checkout) },
+                                onChangePayment = { openAccountScreen(Screen.Payment, Screen.Checkout) },
                                 onConfirmOrder = {
                                     val ok = store.confirmOrder()
                                     if (ok) screen = Screen.OrderPlaced
@@ -254,13 +269,13 @@ fun App() {
                                 selectedIndex = store.addresses.indexOf(store.selectedAddress),
                                 onSelect = store::selectAddress,
                                 onSaveAddress = store::saveAddress,
-                                onBack = { screen = Screen.Checkout },
+                                onBack = { screen = accountOrigin },
                             )
                             Screen.Payment -> PaymentScreen(
                                 options = store.payments,
                                 selected = store.payment,
                                 onSelect = { store.payment = it },
-                                onBack = { screen = Screen.Checkout },
+                                onBack = { screen = accountOrigin },
                             )
                             Screen.OrderPlaced -> store.order?.let { placed ->
                                 OrderPlacedScreen(
@@ -303,6 +318,27 @@ fun App() {
                                 onAddToCart = { id -> store.addToCart(id, 1) },
                                 onExplore = { screen = Screen.Home },
                             )
+                            Screen.Profile -> ProfileScreen(
+                                // Até GET /me responder, mostra o nome que veio da Home.
+                                profile = store.profile ?: UserProfile(store.userName, "", ""),
+                                addressCount = store.addresses.size,
+                                paymentCount = store.payments.size,
+                                unreadNotifications = store.unreadNotifications,
+                                theme = store.theme,
+                                onOpenNotifications = { comingSoon("Notificações") },
+                                onEditProfile = { comingSoon("Editar perfil") },
+                                onAddresses = { openAccountScreen(Screen.Address, Screen.Profile) },
+                                onPayments = { openAccountScreen(Screen.Payment, Screen.Profile) },
+                                onSettings = { comingSoon("Configurações") },
+                                onTheme = { comingSoon("Tema") },
+                                onHelp = { store.message = "Central de ajuda em breve." },
+                                onLogout = {
+                                    scope.launch {
+                                        store.logout()
+                                        screen = Screen.Welcome
+                                    }
+                                },
+                            )
                             Screen.OrderDetail -> {
                                 val detail = store.orderDetail?.takeIf { it.id == detailId }
                                 if (detail == null) {
@@ -327,8 +363,7 @@ fun App() {
                                 MainTab.Search -> screen = Screen.Search
                                 MainTab.Orders -> screen = Screen.Orders
                                 MainTab.Favorites -> screen = Screen.Favorites
-                                // O perfil fica para a próxima issue.
-                                MainTab.Profile -> store.message = "${selected.label} estará disponível em breve."
+                                MainTab.Profile -> screen = Screen.Profile
                             }
                         },
                         badges = mapOf(MainTab.Orders to store.liveOrders.size, MainTab.Favorites to store.favoriteIds.size),
