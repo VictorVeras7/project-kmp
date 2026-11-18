@@ -124,6 +124,19 @@ class RangoApi(private val baseUrl: String = ApiBaseUrl) {
         call<Unit>(if (favorite) HttpMethod.Put else HttpMethod.Delete, "/favorites/$productId")
     }
 
+    // Perfil
+
+    suspend fun me(): ProfileDto = call(HttpMethod.Get, "/me")
+
+    suspend fun settings(): SettingsDto = call(HttpMethod.Get, "/me/settings")
+
+    // Só o total de não lidas (ponto no sino e dica da linha "Notificações").
+    suspend fun unreadNotifications(): Int =
+        call<NotificationCountDto>(HttpMethod.Get, "/notifications") {
+            parameter("unreadOnly", "true")
+            parameter("pageSize", 1)
+        }.unreadCount
+
     // Carrinho
 
     suspend fun cart(): CartDto = call(HttpMethod.Get, "/cart")

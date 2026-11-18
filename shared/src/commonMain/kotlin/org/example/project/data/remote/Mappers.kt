@@ -19,6 +19,8 @@ import org.example.project.data.PaymentMethod
 import org.example.project.data.PaymentOption
 import org.example.project.data.Product
 import org.example.project.data.ProductTag
+import org.example.project.data.ThemeMode
+import org.example.project.data.UserProfile
 import kotlin.time.Clock
 import kotlin.time.Instant
 
@@ -75,6 +77,10 @@ private val MethodsByType = mapOf(
 
 fun PaymentMethodDto.toOption(): PaymentOption? =
     MethodsByType[type]?.let { PaymentOption(id, it, label, detail) }
+
+fun ProfileDto.toProfile() = UserProfile(name = name, email = email, phone = phone)
+
+fun SettingsDto.toThemeMode(): ThemeMode = ThemeMode.entries.firstOrNull { it.apiValue == theme } ?: ThemeMode.System
 
 fun OrderDto.toOrder(): Order {
     val currentStep = OrderStep.entries.getOrElse(step) { OrderStep.Received }
