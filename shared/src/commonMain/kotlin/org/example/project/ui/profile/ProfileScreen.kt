@@ -264,3 +264,48 @@ private fun ProfileRowItem(row: ProfileRow) {
     }
 }
 
+private val PreviewProfile = UserProfile(name = "Marina Alves", email = "marina.alves@email.com", phone = "(11) 98876-4410")
+
+@Preview
+@Composable
+private fun ProfileScreenPreview() {
+    RangoTheme(darkTheme = false) {
+        ProfileScreen(
+            profile = PreviewProfile,
+            addressCount = 2,
+            paymentCount = 4,
+            unreadNotifications = 2,
+            theme = ThemeMode.Light,
+            onOpenNotifications = {},
+            onEditProfile = {},
+            onAddresses = {},
+            onPayments = {},
+            onSettings = {},
+            onTheme = {},
+            onHelp = {},
+            onLogout = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun ProfileScreenDarkPreview() {
+    RangoTheme(darkTheme = true) {
+        ProfileScreen(
+            profile = PreviewProfile,
+            addressCount = 1,
+            paymentCount = 4,
+            unreadNotifications = 0,
+            theme = ThemeMode.Dark,
+            onOpenNotifications = {},
+            onEditProfile = {},
+            onAddresses = {},
+            onPayments = {},
+            onSettings = {},
+            onTheme = {},
+            onHelp = {},
+            onLogout = {},
+        )
+    }
+}
