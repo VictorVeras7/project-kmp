@@ -198,3 +198,31 @@ private fun ProfileHeader(
     }
 }
 
+// Sino do topo, com ponto vermelho quando há notificação não lida.
+@Composable
+private fun BellButton(hasUnread: Boolean, onClick: () -> Unit) {
+    val shape = RoundedCornerShape(13.dp)
+    Box(
+        modifier = Modifier
+            .size(40.dp)
+            .clip(shape)
+            .background(MaterialTheme.colorScheme.surface, shape)
+            .border(1.dp, MaterialTheme.colorScheme.outline, shape)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(RangoIcons.Bell, contentDescription = "Notificações", tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(20.dp))
+        if (hasUnread) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .offset(x = (-8).dp, y = 7.dp)
+                    .size(8.dp)
+                    .background(MaterialTheme.colorScheme.surface, CircleShape)
+                    .padding(1.5.dp)
+                    .background(RangoColors.Error, CircleShape),
+            )
+        }
+    }
+}
+
