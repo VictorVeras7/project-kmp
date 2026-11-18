@@ -124,3 +124,77 @@ private fun unreadHint(count: Int): String = when (count) {
     else -> "$count não lidas"
 }
 
+// Topo branco: título com o sino, avatar com nome, e-mail e telefone, e o botão "Editar perfil".
+@Composable
+private fun ProfileHeader(
+    profile: UserProfile,
+    hasUnread: Boolean,
+    onOpenNotifications: () -> Unit,
+    onEditProfile: () -> Unit,
+) {
+    Column(modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface)) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 22.dp),
+            verticalArrangement = Arrangement.spacedBy(15.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    "Perfil",
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontSize = 21.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = (-0.6).sp,
+                )
+                BellButton(hasUnread = hasUnread, onClick = onOpenNotifications)
+            }
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                Box(
+                    modifier = Modifier
+                        .size(66.dp)
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f), RoundedCornerShape(22.dp))
+                        .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(22.dp)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(avatarInitials(profile.name), color = RangoColors.Primary, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
+                }
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Text(
+                        profile.name,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontSize = 17.5.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = (-0.4).sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    // E-mail e telefone chegam com GET /me; até lá só o nome aparece.
+                    listOf(profile.email, profile.phone).filter { it.isNotBlank() }.forEach { line ->
+                        Text(
+                            line,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontSize = 12.5.sp,
+                            fontWeight = FontWeight.Medium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
+            }
+            OutlinedButton(
+                onClick = onEditProfile,
+                modifier = Modifier.fillMaxWidth().height(46.dp),
+                shape = RoundedCornerShape(15.dp),
+                border = BorderStroke(1.5.dp, RangoColors.Primary),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = RangoColors.Primary),
+            ) {
+                Text("Editar perfil", fontSize = 13.5.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+        Box(Modifier.fillMaxWidth().height(1.dp).background(MaterialTheme.colorScheme.outline))
+    }
+}
+
