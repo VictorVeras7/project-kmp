@@ -226,3 +226,41 @@ private fun BellButton(hasUnread: Boolean, onClick: () -> Unit) {
     }
 }
 
+@Composable
+private fun ProfileRowItem(row: ProfileRow) {
+    val shape = RoundedCornerShape(17.dp)
+    val accent = if (row.danger) RangoColors.Error else RangoColors.Primary
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(MaterialTheme.colorScheme.surface, shape)
+            .border(1.dp, if (row.danger) RangoColors.Error.copy(alpha = 0.35f) else MaterialTheme.colorScheme.outline, shape)
+            .clickable(onClick = row.onClick)
+            .padding(14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Box(
+            modifier = Modifier.size(36.dp).background(accent.copy(alpha = 0.12f), RoundedCornerShape(12.dp)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(row.icon, contentDescription = null, tint = accent, modifier = Modifier.size(19.dp))
+        }
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+            Text(
+                row.label,
+                color = if (row.danger) RangoColors.Error else MaterialTheme.colorScheme.onSurface,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+            )
+            if (row.hint.isNotEmpty()) {
+                Text(row.hint, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp, fontWeight = FontWeight.Medium)
+            }
+        }
+        if (!row.danger) {
+            Icon(RangoIcons.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+        }
+    }
+}
+
