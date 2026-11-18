@@ -37,6 +37,7 @@ import org.example.project.ui.checkout.CheckoutScreen
 import org.example.project.ui.checkout.PaymentScreen
 import org.example.project.ui.components.BottomNavBar
 import org.example.project.ui.components.MainTab
+import org.example.project.ui.favorites.FavoritesScreen
 import org.example.project.ui.home.HomeScreen
 import org.example.project.ui.login.LoginScreen
 import org.example.project.ui.order.OrderDetailScreen
@@ -52,11 +53,16 @@ import org.example.project.ui.welcome.WelcomeScreen
 
 private enum class Screen {
     Splash, Welcome, Login, Signup, Home, ProductDetail, Cart, Checkout, Address, Payment, OrderPlaced, Tracking,
-    Orders, OrderDetail, Search,
+    Orders, OrderDetail, Search, Favorites,
 }
 
 // Telas com a barra de navegação inferior e a aba que cada uma marca.
-private val TabScreens = mapOf(Screen.Home to MainTab.Home, Screen.Search to MainTab.Search, Screen.Orders to MainTab.Orders)
+private val TabScreens = mapOf(
+    Screen.Home to MainTab.Home,
+    Screen.Search to MainTab.Search,
+    Screen.Orders to MainTab.Orders,
+    Screen.Favorites to MainTab.Favorites,
+)
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -105,6 +111,7 @@ fun App() {
     LaunchedEffect(screen) {
         if (screen in TabScreens) store.loadOrders()
         if (screen == Screen.Search) store.loadSearchHome()
+        if (screen == Screen.Favorites) store.loadFavorites()
     }
 
     fun openCart(from: Screen) {
@@ -288,6 +295,14 @@ fun App() {
                                 onReorder = { id -> reorder(id, Screen.Orders) },
                                 onExplore = { screen = Screen.Home },
                             )
+                            Screen.Favorites -> FavoritesScreen(
+                                favorites = store.favorites,
+                                loading = store.favoritesLoading,
+                                onOpenProduct = { id -> openProduct(id, Screen.Favorites) },
+                                onToggleFavorite = store::toggleFavorite,
+                                onAddToCart = { id -> store.addToCart(id, 1) },
+                                onExplore = { screen = Screen.Home },
+                            )
                             Screen.OrderDetail -> {
                                 val detail = store.orderDetail?.takeIf { it.id == detailId }
                                 if (detail == null) {
@@ -311,8 +326,9 @@ fun App() {
                                 MainTab.Home -> screen = Screen.Home
                                 MainTab.Search -> screen = Screen.Search
                                 MainTab.Orders -> screen = Screen.Orders
-                                // Favoritos e perfil ficam para as próximas issues.
-                                else -> store.message = "${selected.label} estará disponível em breve."
+                                MainTab.Favorites -> screen = Screen.Favorites
+                                // O perfil fica para a próxima issue.
+                                MainTab.Profile -> store.message = "${selected.label} estará disponível em breve."
                             }
                         },
                         badges = mapOf(MainTab.Orders to store.liveOrders.size, MainTab.Favorites to store.favoriteIds.size),
