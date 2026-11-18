@@ -62,6 +62,21 @@ class RangoApi(private val baseUrl: String = ApiBaseUrl) {
         return session.user
     }
 
+    // Sair: esquece a sessão no aparelho e revoga o refresh token no servidor.
+    // A sessão local some antes da chamada, então sair funciona mesmo sem rede.
+    suspend fun logout() {
+        val token = refreshToken
+        accessToken = null
+        refreshToken = null
+        SessionStorage.saveRefreshToken(null)
+        if (token == null) return
+        try {
+            call<Unit>(HttpMethod.Post, "/auth/logout", auth = false) { jsonBody(RefreshRequest(token)) }
+        } catch (e: ApiException) {
+            // O token expira sozinho no servidor; não impede a saída.
+        }
+    }
+
     // Abertura do app: se houver refresh token salvo, renova a sessão.
     suspend fun restoreSession(): Boolean {
         refreshToken = SessionStorage.readRefreshToken() ?: return false
