@@ -51,7 +51,10 @@ class RangoStore(private val api: RangoApi, private val scope: CoroutineScope) {
         private set
     var products by mutableStateOf(listOf<Product>())
         private set
+    // Do favorito mais antigo para o mais novo (o conjunto mantém a ordem de inclusão).
     var favoriteIds by mutableStateOf(setOf<String>())
+        private set
+    var favoritesLoading by mutableStateOf(false)
         private set
     var addons by mutableStateOf(SampleAddons)
         private set
@@ -157,6 +160,7 @@ class RangoStore(private val api: RangoApi, private val scope: CoroutineScope) {
         userName = ""
         products = emptyList()
         favoriteIds = emptySet()
+        favoritesLoading = false
         cart = Cart()
         couponInput = ""
         addresses = emptyList()
@@ -187,11 +191,14 @@ class RangoStore(private val api: RangoApi, private val scope: CoroutineScope) {
                 val paymentList = async { api.paymentMethods() }
                 // Pedidos em andamento: badge da aba "Pedidos".
                 val live = async { api.orders("live") }
+                // Favoritos: badge da aba "Favoritos", mesmo dos produtos que não estão na Home.
+                val favorites = async { api.favorites() }
 
                 val homeDto = home.await()
                 userName = homeDto.user.name
                 categorySlugs = homeDto.categories.associate { it.name to it.slug }
                 mergeProducts(homeDto.sections.flatMap { it.products })
+                setFavorites(favorites.await())
 
                 addresses = addressList.await().map { it.toAddress() }
                 selectedAddressId = addressList.await().firstOrNull { it.isSelected }?.id ?: homeDto.selectedAddress?.id
@@ -232,6 +239,28 @@ class RangoStore(private val api: RangoApi, private val scope: CoroutineScope) {
                 message = e.message
             }
         }
+        message = if (favorite) "Adicionado aos favoritos." else "Removido dos favoritos."
+    }
+
+    // Lista da tela "Favoritos": os mais recentes primeiro.
+    val favorites: List<Product>
+        get() {
+            val byId = products.associateBy { it.id }
+            return favoriteIds.reversed().mapNotNull { byId[it] }
+        }
+
+    fun loadFavorites() {
+        favoritesLoading = true
+        scope.launch {
+            safely { setFavorites(api.favorites()) }
+            favoritesLoading = false
+        }
+    }
+
+    private fun setFavorites(list: List<ProductDto>) {
+        mergeProducts(list)
+        // A API manda do mais recente para o mais antigo; o conjunto guarda ao contrário.
+        favoriteIds = list.asReversed().map { it.id }.toSet()
     }
 
     private fun mergeProducts(list: List<ProductDto>) {

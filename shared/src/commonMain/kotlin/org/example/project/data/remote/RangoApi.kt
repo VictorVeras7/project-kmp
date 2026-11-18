@@ -117,6 +117,9 @@ class RangoApi(private val baseUrl: String = ApiBaseUrl) {
         call<Unit>(HttpMethod.Delete, "/search/recent")
     }
 
+    // Favoritos, dos mais recentes para os mais antigos.
+    suspend fun favorites(): List<ProductDto> = call<ListResponse<ProductDto>>(HttpMethod.Get, "/favorites").data
+
     suspend fun setFavorite(productId: String, favorite: Boolean) {
         call<Unit>(if (favorite) HttpMethod.Put else HttpMethod.Delete, "/favorites/$productId")
     }
