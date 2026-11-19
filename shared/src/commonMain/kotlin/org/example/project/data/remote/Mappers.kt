@@ -9,6 +9,7 @@ import org.example.project.data.CartItem
 import org.example.project.data.CartTotals
 import org.example.project.data.Courier
 import org.example.project.data.DeliveryAddress
+import org.example.project.data.NotificationPrefs
 import org.example.project.data.Order
 import org.example.project.data.OrderDetail
 import org.example.project.data.OrderLine
@@ -81,6 +82,10 @@ fun PaymentMethodDto.toOption(): PaymentOption? =
 fun ProfileDto.toProfile() = UserProfile(name = name, email = email, phone = phone)
 
 fun SettingsDto.toThemeMode(): ThemeMode = ThemeMode.entries.firstOrNull { it.apiValue == theme } ?: ThemeMode.System
+
+fun NotificationPrefsDto.toPrefs() = NotificationPrefs(orders = orders, promos = promos, news = news)
+
+fun NotificationPrefs.toDto() = NotificationPrefsDto(orders = orders, promos = promos, news = news)
 
 fun OrderDto.toOrder(): Order {
     val currentStep = OrderStep.entries.getOrElse(step) { OrderStep.Received }

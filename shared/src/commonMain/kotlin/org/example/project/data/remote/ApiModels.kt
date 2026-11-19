@@ -233,7 +233,15 @@ data class ReorderDto(val cart: CartDto, val skippedProductIds: List<String> = e
 data class ProfileDto(val name: String, val email: String, val phone: String)
 
 @Serializable
-data class SettingsDto(val theme: String)
+data class SettingsDto(val theme: String, val notifications: NotificationPrefsDto)
+
+// Sem valores padrão de propósito: o Json omite campos iguais ao padrão, e aqui os três precisam ir sempre.
+@Serializable
+data class NotificationPrefsDto(val orders: Boolean, val promos: Boolean, val news: Boolean)
+
+// PATCH /me/settings é parcial: campos nulos não são enviados (o Json não codifica valores padrão).
+@Serializable
+data class UpdateSettingsRequest(val theme: String? = null, val notifications: NotificationPrefsDto? = null)
 
 // De GET /notifications, o app só usa o total de não lidas.
 @Serializable
