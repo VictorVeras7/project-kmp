@@ -12,3 +12,6 @@ enum class ThemeMode(val label: String, val apiValue: String) {
     Dark("Escuro", "dark"),
     System("Sistema", "system"),
 }
+
+// Quais notificações o usuário quer receber (GET e PATCH /me/settings).
+data class NotificationPrefs(val orders: Boolean = true, val promos: Boolean = true, val news: Boolean = false)
