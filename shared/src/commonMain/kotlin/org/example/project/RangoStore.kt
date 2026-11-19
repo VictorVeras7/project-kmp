@@ -26,6 +26,8 @@ import org.example.project.data.OrderSummary
 import org.example.project.data.PaymentOption
 import org.example.project.data.Product
 import org.example.project.data.SampleAddons
+import org.example.project.data.ThemeMode
+import org.example.project.data.UserProfile
 import org.example.project.data.remote.ApiException
 import org.example.project.data.remote.NewAddressRequest
 import org.example.project.data.remote.ProductDto
@@ -37,6 +39,8 @@ import org.example.project.data.remote.toCart
 import org.example.project.data.remote.toDetail
 import org.example.project.data.remote.toOption
 import org.example.project.data.remote.toOrder
+import org.example.project.data.remote.toProfile
+import org.example.project.data.remote.toThemeMode
 import org.example.project.data.remote.toProduct
 import org.example.project.data.remote.toSummary
 import org.example.project.ui.signup.SignupData
@@ -98,6 +102,14 @@ class RangoStore(private val api: RangoApi, private val scope: CoroutineScope) {
         private set
     private var searchJob: Job? = null
 
+    // Perfil: dados da conta, tema salvo e notificações não lidas (sino e dica da linha).
+    var profile by mutableStateOf<UserProfile?>(null)
+        private set
+    var theme by mutableStateOf(ThemeMode.System)
+        private set
+    var unreadNotifications by mutableStateOf(0)
+        private set
+
     // Mensagem de erro para o aviso na parte de baixo da tela; o App limpa depois de mostrar.
     var message by mutableStateOf<String?>(null)
 
@@ -156,8 +168,18 @@ class RangoStore(private val api: RangoApi, private val scope: CoroutineScope) {
         }
     }
 
+    // Sair da conta: revoga a sessão e limpa os dados do usuário anterior.
+    suspend fun logout() {
+        api.logout()
+        clear()
+        message = "Você saiu da conta."
+    }
+
     private fun clear() {
         userName = ""
+        profile = null
+        theme = ThemeMode.System
+        unreadNotifications = 0
         products = emptyList()
         favoriteIds = emptySet()
         favoritesLoading = false
@@ -358,6 +380,22 @@ class RangoStore(private val api: RangoApi, private val scope: CoroutineScope) {
                 searchResults = list.map { it.toProduct() }
             }
             searching = false
+        }
+    }
+
+    // Perfil
+
+    // Abertura da aba: dados da conta, tema e não lidas, em paralelo.
+    fun loadProfile() {
+        launchSafely {
+            coroutineScope {
+                val me = async { api.me() }
+                val settings = async { api.settings() }
+                val unread = async { api.unreadNotifications() }
+                profile = me.await().toProfile().also { userName = it.name }
+                theme = settings.await().toThemeMode()
+                unreadNotifications = unread.await()
+            }
         }
     }
 

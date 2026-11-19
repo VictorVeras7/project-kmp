@@ -226,3 +226,15 @@ data class ThumbnailDto(val imageHue: Float)
 // Resposta de POST /orders/:id/reorder: carrinho novo e produtos que não estão mais disponíveis.
 @Serializable
 data class ReorderDto(val cart: CartDto, val skippedProductIds: List<String> = emptyList())
+
+// Perfil
+
+@Serializable
+data class ProfileDto(val name: String, val email: String, val phone: String)
+
+@Serializable
+data class SettingsDto(val theme: String)
+
+// De GET /notifications, o app só usa o total de não lidas.
+@Serializable
+data class NotificationCountDto(val unreadCount: Int)
