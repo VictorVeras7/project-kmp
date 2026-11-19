@@ -10,8 +10,11 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -20,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
@@ -121,4 +125,19 @@ internal fun RowValue(text: String) {
 @Composable
 internal fun Chevron() {
     Icon(RangoIcons.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+}
+
+// Chave liga/desliga do protótipo: trilho laranja quando ligada, cinza da borda quando desligada.
+@Composable
+internal fun RangoSwitch(checked: Boolean) {
+    Box(
+        modifier = Modifier
+            .width(40.dp)
+            .height(23.dp)
+            .background(if (checked) RangoColors.Primary else MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp))
+            .padding(2.5.dp),
+        contentAlignment = if (checked) Alignment.CenterEnd else Alignment.CenterStart,
+    ) {
+        Box(Modifier.size(18.dp).background(Color.White, CircleShape))
+    }
 }
