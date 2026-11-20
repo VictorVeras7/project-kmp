@@ -187,4 +187,29 @@ object RangoIcons {
         "M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0z", "M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3", "M12 17h.01",
     )
     val Logout = icon("logout", false, "M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4", "M16 17l5-5-5-5", "M21 12H9")
+    val Language = icon(
+        "language", false,
+        "M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0z", "M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20", "M2 12h20",
+    )
+    val Sync = icon(
+        "sync", false,
+        "M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8", "M21 3v5h-5",
+        "M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16", "M8 16H3v5",
+    )
+    val Description = icon(
+        "description", false,
+        "M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z", "M14 2v4a2 2 0 0 0 2 2h4", "M16 13H8", "M16 17H8", "M10 9H8",
+    )
+    val LightMode = icon(
+        "light_mode", false,
+        "M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0z", "M12 2v2", "M12 20v2", "M4.93 4.93l1.41 1.41", "M17.66 17.66l1.41 1.41",
+        "M2 12h2", "M20 12h2", "M6.34 17.66l-1.41 1.41", "M19.07 4.93l-1.41 1.41",
+    )
+    val BrightnessAuto = icon("brightness_auto", false, "M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0z", "M12 18a6 6 0 0 0 0-12v12z")
+    val Tag = icon(
+        "tag", false,
+        "M12.59 2.59A2 2 0 0 0 11.17 2H4a2 2 0 0 0-2 2v7.17a2 2 0 0 0 .59 1.42l8.7 8.7a2.43 2.43 0 0 0 3.42 0l6.58-6.58a2.43 2.43 0 0 0 0-3.42z",
+        "M7.5 7.5h.01",
+    )
+    val Campaign = icon("campaign", false, "M3 11l18-5v12L3 14v-3z", "M11.6 16.8a3 3 0 1 1-5.8-1.6")
 }

@@ -145,6 +145,10 @@ class RangoApi(private val baseUrl: String = ApiBaseUrl) {
 
     suspend fun settings(): SettingsDto = call(HttpMethod.Get, "/me/settings")
 
+    // Atualização parcial: envia só o tema ou só as notificações.
+    suspend fun updateSettings(request: UpdateSettingsRequest): SettingsDto =
+        call(HttpMethod.Patch, "/me/settings") { jsonBody(request) }
+
     // Só o total de não lidas (ponto no sino e dica da linha "Notificações").
     suspend fun unreadNotifications(): Int =
         call<NotificationCountDto>(HttpMethod.Get, "/notifications") {

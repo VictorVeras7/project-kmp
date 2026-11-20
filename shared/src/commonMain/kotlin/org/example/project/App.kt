@@ -1,5 +1,6 @@
 package org.example.project
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -29,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.example.project.data.OrderPollIntervalMs
+import org.example.project.data.ThemeMode
 import org.example.project.data.UserProfile
 import org.example.project.data.itemCount
 import org.example.project.data.remote.RangoApi
@@ -48,6 +50,9 @@ import org.example.project.ui.order.OrdersScreen
 import org.example.project.ui.product.ProductDetailScreen
 import org.example.project.ui.profile.ProfileScreen
 import org.example.project.ui.search.SearchScreen
+import org.example.project.ui.settings.NotificationSettingsScreen
+import org.example.project.ui.settings.SettingsScreen
+import org.example.project.ui.settings.ThemeScreen
 import org.example.project.ui.signup.SignupScreen
 import org.example.project.ui.theme.RangoColors
 import org.example.project.ui.theme.RangoTheme
@@ -55,7 +60,7 @@ import org.example.project.ui.welcome.WelcomeScreen
 
 private enum class Screen {
     Splash, Welcome, Login, Signup, Home, ProductDetail, Cart, Checkout, Address, Payment, OrderPlaced, Tracking,
-    Orders, OrderDetail, Search, Favorites, Profile,
+    Orders, OrderDetail, Search, Favorites, Profile, Settings, ThemeSettings, NotificationSettings,
 }
 
 // Telas com a barra de navegação inferior e a aba que cada uma marca.
@@ -70,7 +75,7 @@ private val TabScreens = mapOf(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 @Preview
-fun App() {
+fun App(onDarkThemeChange: (Boolean) -> Unit = {}) {
     val scope = rememberCoroutineScope()
     val store = remember { RangoStore(RangoApi(), scope) }
     var screen by remember { mutableStateOf(Screen.Splash) }
@@ -80,8 +85,10 @@ fun App() {
     // Mesma ideia para o carrinho (Home ou "Pedir novamente") e o acompanhamento.
     var cartOrigin by remember { mutableStateOf(Screen.Home) }
     var trackingOrigin by remember { mutableStateOf(Screen.OrderPlaced) }
-    // Endereços e pagamento abrem do checkout ou do perfil.
+    // Endereços e pagamento abrem do checkout, do perfil ou das configurações.
     var accountOrigin by remember { mutableStateOf(Screen.Checkout) }
+    // Tema abre do perfil ou das configurações.
+    var themeOrigin by remember { mutableStateOf(Screen.Settings) }
     var detailId by remember { mutableStateOf<Int?>(null) }
     // Mantém o estado da Home (categoria e scroll) ao abrir e voltar do produto.
     val stateHolder = rememberSaveableStateHolder()
@@ -134,6 +141,11 @@ fun App() {
         store.message = "$feature estará disponível em breve."
     }
 
+    fun openTheme(from: Screen) {
+        themeOrigin = from
+        screen = Screen.ThemeSettings
+    }
+
     fun reorder(id: Int, from: Screen) {
         scope.launch { if (store.reorder(id)) openCart(from) }
     }
@@ -149,7 +161,16 @@ fun App() {
     // Com o teclado aberto (digitando na busca), a barra inferior sai para dar espaço aos resultados.
     val showNavBar = tab != null && !WindowInsets.isImeVisible
 
-    RangoTheme {
+    // Tema salvo nas configurações; "Sistema" segue o aparelho.
+    val darkTheme = when (store.theme) {
+        ThemeMode.Light -> false
+        ThemeMode.Dark -> true
+        ThemeMode.System -> isSystemInDarkTheme()
+    }
+    // A plataforma ajusta a barra de status (ícones claros no escuro).
+    LaunchedEffect(darkTheme) { onDarkThemeChange(darkTheme) }
+
+    RangoTheme(darkTheme = darkTheme) {
         Box(Modifier.fillMaxSize()) {
             Column(Modifier.fillMaxSize()) {
                 Box(Modifier.weight(1f)) {
@@ -329,8 +350,8 @@ fun App() {
                                 onEditProfile = { comingSoon("Editar perfil") },
                                 onAddresses = { openAccountScreen(Screen.Address, Screen.Profile) },
                                 onPayments = { openAccountScreen(Screen.Payment, Screen.Profile) },
-                                onSettings = { comingSoon("Configurações") },
-                                onTheme = { comingSoon("Tema") },
+                                onSettings = { screen = Screen.Settings },
+                                onTheme = { openTheme(Screen.Profile) },
                                 onHelp = { store.message = "Central de ajuda em breve." },
                                 onLogout = {
                                     scope.launch {
@@ -338,6 +359,35 @@ fun App() {
                                         screen = Screen.Welcome
                                     }
                                 },
+                            )
+                            Screen.Settings -> SettingsScreen(
+                                theme = store.theme,
+                                onBack = { screen = Screen.Profile },
+                                onTheme = { openTheme(Screen.Settings) },
+                                onNotifications = { screen = Screen.NotificationSettings },
+                                onLanguage = { store.message = "Por enquanto, o app está disponível apenas em português." },
+                                onPersonalData = { comingSoon("Editar perfil") },
+                                onAddresses = { openAccountScreen(Screen.Address, Screen.Settings) },
+                                onPayments = { openAccountScreen(Screen.Payment, Screen.Settings) },
+                                onSync = store::sync,
+                                onClearLocalData = {
+                                    scope.launch {
+                                        store.clearLocalData()
+                                        screen = Screen.Welcome
+                                    }
+                                },
+                                onHelp = { store.message = "Central de ajuda em breve." },
+                                onTerms = { comingSoon("Termos e privacidade") },
+                            )
+                            Screen.ThemeSettings -> ThemeScreen(
+                                theme = store.theme,
+                                onSelect = store::changeTheme,
+                                onBack = { screen = themeOrigin },
+                            )
+                            Screen.NotificationSettings -> NotificationSettingsScreen(
+                                prefs = store.notificationPrefs,
+                                onChange = store::changeNotificationPrefs,
+                                onBack = { screen = Screen.Settings },
                             )
                             Screen.OrderDetail -> {
                                 val detail = store.orderDetail?.takeIf { it.id == detailId }

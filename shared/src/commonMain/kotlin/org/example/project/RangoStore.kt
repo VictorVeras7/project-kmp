@@ -20,6 +20,7 @@ import org.example.project.data.SearchSuggestion
 import org.example.project.data.formatMoney
 import org.example.project.data.formatRating
 import org.example.project.data.DeliveryAddress
+import org.example.project.data.NotificationPrefs
 import org.example.project.data.Order
 import org.example.project.data.OrderDetail
 import org.example.project.data.OrderSummary
@@ -33,12 +34,16 @@ import org.example.project.data.remote.NewAddressRequest
 import org.example.project.data.remote.ProductDto
 import org.example.project.data.remote.RangoApi
 import org.example.project.data.remote.RegisterRequest
+import org.example.project.data.remote.SettingsDto
+import org.example.project.data.remote.UpdateSettingsRequest
 import org.example.project.data.remote.toAddon
 import org.example.project.data.remote.toAddress
 import org.example.project.data.remote.toCart
 import org.example.project.data.remote.toDetail
+import org.example.project.data.remote.toDto
 import org.example.project.data.remote.toOption
 import org.example.project.data.remote.toOrder
+import org.example.project.data.remote.toPrefs
 import org.example.project.data.remote.toProfile
 import org.example.project.data.remote.toThemeMode
 import org.example.project.data.remote.toProduct
@@ -108,6 +113,9 @@ class RangoStore(private val api: RangoApi, private val scope: CoroutineScope) {
     var theme by mutableStateOf(ThemeMode.System)
         private set
     var unreadNotifications by mutableStateOf(0)
+        private set
+    // Configurações: quais notificações o usuário quer receber.
+    var notificationPrefs by mutableStateOf(NotificationPrefs())
         private set
 
     // Mensagem de erro para o aviso na parte de baixo da tela; o App limpa depois de mostrar.
@@ -180,6 +188,7 @@ class RangoStore(private val api: RangoApi, private val scope: CoroutineScope) {
         profile = null
         theme = ThemeMode.System
         unreadNotifications = 0
+        notificationPrefs = NotificationPrefs()
         products = emptyList()
         favoriteIds = emptySet()
         favoritesLoading = false
@@ -202,10 +211,10 @@ class RangoStore(private val api: RangoApi, private val scope: CoroutineScope) {
         suggestions = emptyList()
     }
 
-    // Carrega tudo o que a Home e o checkout precisam, em paralelo.
-    private suspend fun loadAll() {
+    // Carrega tudo o que a Home e o checkout precisam, em paralelo; devolve se deu certo.
+    private suspend fun loadAll(): Boolean {
         // coroutineScope: se uma chamada falhar, as outras são canceladas e o erro chega ao safely.
-        safely<Unit> {
+        return safely {
             coroutineScope {
                 val home = async { api.home() }
                 val cartDto = async { api.cart() }
@@ -215,6 +224,8 @@ class RangoStore(private val api: RangoApi, private val scope: CoroutineScope) {
                 val live = async { api.orders("live") }
                 // Favoritos: badge da aba "Favoritos", mesmo dos produtos que não estão na Home.
                 val favorites = async { api.favorites() }
+                // Configurações já na entrada, para o app abrir no tema salvo.
+                val settings = async { api.settings() }
 
                 val homeDto = home.await()
                 userName = homeDto.user.name
@@ -228,8 +239,9 @@ class RangoStore(private val api: RangoApi, private val scope: CoroutineScope) {
                 payment = payment?.let { current -> payments.firstOrNull { it.id == current.id } } ?: payments.firstOrNull()
                 setCart(cartDto.await().toCart())
                 liveOrders = live.await().map { it.toSummary() }
+                applySettings(settings.await())
             }
-        }
+        } != null
     }
 
     // Catálogo
@@ -393,10 +405,62 @@ class RangoStore(private val api: RangoApi, private val scope: CoroutineScope) {
                 val settings = async { api.settings() }
                 val unread = async { api.unreadNotifications() }
                 profile = me.await().toProfile().also { userName = it.name }
-                theme = settings.await().toThemeMode()
+                applySettings(settings.await())
                 unreadNotifications = unread.await()
             }
         }
+    }
+
+    // Configurações
+
+    private fun applySettings(dto: SettingsDto) {
+        theme = dto.toThemeMode()
+        notificationPrefs = dto.notifications.toPrefs()
+    }
+
+    // Troca na hora e volta ao valor anterior se o servidor recusar.
+    fun changeTheme(mode: ThemeMode) {
+        val previous = theme
+        if (mode == previous) return
+        theme = mode
+        scope.launch {
+            try {
+                api.updateSettings(UpdateSettingsRequest(theme = mode.apiValue))
+            } catch (e: ApiException) {
+                theme = previous
+                message = e.message
+            }
+        }
+    }
+
+    fun changeNotificationPrefs(prefs: NotificationPrefs) {
+        val previous = notificationPrefs
+        notificationPrefs = prefs
+        scope.launch {
+            try {
+                api.updateSettings(UpdateSettingsRequest(notifications = prefs.toDto()))
+            } catch (e: ApiException) {
+                notificationPrefs = previous
+                message = e.message
+            }
+        }
+    }
+
+    // "Sincronizar agora": busca de novo no servidor os dados que o app guarda em memória.
+    fun sync() {
+        scope.launch {
+            if (loadAll()) {
+                loadProfile()
+                message = "Dados sincronizados."
+            }
+        }
+    }
+
+    // "Limpar dados locais": apaga a sessão salva no aparelho e os dados em memória.
+    suspend fun clearLocalData() {
+        api.logout()
+        clear()
+        message = "Dados locais apagados."
     }
 
     // Carrinho
