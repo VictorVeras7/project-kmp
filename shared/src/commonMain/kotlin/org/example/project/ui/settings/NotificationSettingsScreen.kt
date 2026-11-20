@@ -4,10 +4,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.example.project.data.NotificationPrefs
 import org.example.project.ui.checkout.CheckoutScaffold
 import org.example.project.ui.theme.RangoIcons
+import org.example.project.ui.theme.RangoTheme
 
 private class NotificationOption(
     val icon: ImageVector,
@@ -53,5 +55,21 @@ fun NotificationSettingsScreen(
                 }
             }
         }
+    }
+}
+
+@Preview
+@Composable
+private fun NotificationSettingsScreenPreview() {
+    RangoTheme(darkTheme = false) {
+        NotificationSettingsScreen(prefs = NotificationPrefs(), onChange = {}, onBack = {})
+    }
+}
+
+@Preview
+@Composable
+private fun NotificationSettingsScreenDarkPreview() {
+    RangoTheme(darkTheme = true) {
+        NotificationSettingsScreen(prefs = NotificationPrefs(promos = false, news = true), onChange = {}, onBack = {})
     }
 }

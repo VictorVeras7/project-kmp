@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.example.project.data.ThemeMode
@@ -26,6 +27,7 @@ import org.example.project.ui.checkout.CheckoutScaffold
 import org.example.project.ui.checkout.RadioDot
 import org.example.project.ui.theme.RangoColors
 import org.example.project.ui.theme.RangoIcons
+import org.example.project.ui.theme.RangoTheme
 
 private class ThemeOption(val mode: ThemeMode, val label: String, val hint: String, val icon: ImageVector)
 
@@ -110,4 +112,16 @@ private fun ThemePreviewCard(preview: ThemePreview, selected: Boolean, modifier:
         Box(Modifier.fillMaxWidth().height(22.dp).background(RangoColors.Primary, RoundedCornerShape(8.dp)))
         Text(preview.name, color = preview.text, fontSize = 11.sp, fontWeight = FontWeight.ExtraBold)
     }
+}
+
+@Preview
+@Composable
+private fun ThemeScreenPreview() {
+    RangoTheme(darkTheme = false) { ThemeScreen(theme = ThemeMode.Light, onSelect = {}, onBack = {}) }
+}
+
+@Preview
+@Composable
+private fun ThemeScreenDarkPreview() {
+    RangoTheme(darkTheme = true) { ThemeScreen(theme = ThemeMode.Dark, onSelect = {}, onBack = {}) }
 }
