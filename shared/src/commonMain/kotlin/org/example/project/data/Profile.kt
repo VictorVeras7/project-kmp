@@ -1,7 +1,8 @@
 package org.example.project.data
 
 // Dados da conta mostrados no topo do perfil.
-data class UserProfile(val name: String, val email: String, val phone: String)
+// avatarUrl: caminho da foto no servidor; nulo mostra as iniciais.
+data class UserProfile(val name: String, val email: String, val phone: String, val avatarUrl: String? = null)
 
 // Iniciais do avatar: as duas primeiras letras do primeiro nome, como no protótipo e na Home.
 fun avatarInitials(name: String): String = name.trim().substringBefore(' ').take(2).uppercase()

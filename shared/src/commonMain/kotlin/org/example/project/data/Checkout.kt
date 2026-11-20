@@ -5,6 +5,8 @@ data class DeliveryAddress(
     val line: String,
     val city: String,
     val id: Int = 0,
+    // Campos separados do servidor, para o formulário de edição.
+    val form: AddressForm? = null,
 ) {
     // Versão curta para o cabeçalho da Home (sem complemento).
     val short: String get() = line.substringBefore(" · ")
