@@ -63,6 +63,7 @@ kotlin {
             implementation(libs.ktor.serialization.kotlinxJson)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.kotlinx.datetime)
+            implementation(libs.navigationevent.compose)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
