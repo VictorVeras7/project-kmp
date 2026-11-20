@@ -1,9 +1,11 @@
 package org.example.project
 
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
@@ -30,7 +32,11 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            App()
+            // Ícones da barra de status e de navegação seguem o tema do app, não só o do aparelho.
+            App(onDarkThemeChange = { dark ->
+                val style = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { dark }
+                enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)
+            })
         }
     }
 }
