@@ -75,7 +75,7 @@ private val TabScreens = mapOf(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 @Preview
-fun App() {
+fun App(onDarkThemeChange: (Boolean) -> Unit = {}) {
     val scope = rememberCoroutineScope()
     val store = remember { RangoStore(RangoApi(), scope) }
     var screen by remember { mutableStateOf(Screen.Splash) }
@@ -167,6 +167,8 @@ fun App() {
         ThemeMode.Dark -> true
         ThemeMode.System -> isSystemInDarkTheme()
     }
+    // A plataforma ajusta a barra de status (ícones claros no escuro).
+    LaunchedEffect(darkTheme) { onDarkThemeChange(darkTheme) }
 
     RangoTheme(darkTheme = darkTheme) {
         Box(Modifier.fillMaxSize()) {
