@@ -11,6 +11,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.example.project.data.ThemeMode
 import org.example.project.ui.checkout.CheckoutScaffold
+import org.example.project.ui.theme.RangoIcons
 
 // Configurações: grupos Preferências, Conta, Dados e Sobre, na ordem do protótipo.
 @Composable
@@ -36,6 +37,39 @@ fun SettingsScreen(
         modifier = modifier,
         contentSpacing = 18.dp,
     ) {
+        SettingsGroup("Preferências") {
+            SettingsRow(RangoIcons.DarkMode, "Tema", onTheme, first = true) {
+                RowValue(theme.label)
+                Chevron()
+            }
+            SettingsRow(RangoIcons.Bell, "Notificações", onNotifications, first = false) { Chevron() }
+            SettingsRow(RangoIcons.Language, "Idioma", onLanguage, first = false) {
+                RowValue("Português")
+                Chevron()
+            }
+        }
+        SettingsGroup("Conta") {
+            SettingsRow(RangoIcons.User, "Dados pessoais", onPersonalData, first = true) { Chevron() }
+            SettingsRow(RangoIcons.Pin, "Endereços", onAddresses, first = false) { Chevron() }
+            SettingsRow(RangoIcons.Wallet, "Formas de pagamento", onPayments, first = false) { Chevron() }
+        }
+        SettingsGroup("Dados e conexão") {
+            SettingsRow(RangoIcons.Sync, "Sincronizar agora", onSync, first = true, hint = "busca de novo pedidos, carrinho e favoritos") {
+                Chevron()
+            }
+            SettingsRow(
+                RangoIcons.Trash,
+                "Limpar dados locais",
+                onClearLocalData,
+                first = false,
+                hint = "sessão salva neste aparelho",
+                danger = true,
+            ) { Chevron() }
+        }
+        SettingsGroup("Sobre") {
+            SettingsRow(RangoIcons.Help, "Central de ajuda", onHelp, first = true) { Chevron() }
+            SettingsRow(RangoIcons.Description, "Termos e privacidade", onTerms, first = false) { Chevron() }
+        }
         Text(
             "rango v1.0.0",
             modifier = Modifier.fillMaxWidth(),
