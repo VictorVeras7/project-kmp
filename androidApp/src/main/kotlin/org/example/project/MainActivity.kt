@@ -11,7 +11,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
-import org.example.project.data.remote.SessionStorage
+import org.example.project.data.remote.LocalStore
 import org.example.project.platform.LocalNotifications
 
 // Android 17+ exige essa permissão para o app acessar o backend na rede local (10.0.2.2 no emulador).
@@ -24,7 +24,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        SessionStorage.init(applicationContext)
+        LocalStore.init(applicationContext)
         LocalNotifications.init(this)
 
         if (Build.VERSION.SDK_INT >= Android17 &&
