@@ -31,7 +31,8 @@ class ApiException(
     val fields: Map<String, String> = emptyMap(),
 ) : Exception(message)
 
-private const val NetworkError = "NETWORK_ERROR"
+// Sem resposta do servidor (sem rede ou servidor fora do ar).
+const val NetworkError = "NETWORK_ERROR"
 private val SessionEndedCodes = setOf("INVALID_REFRESH_TOKEN", "SESSION_EXPIRED", "INVALID_TOKEN", "UNAUTHORIZED")
 
 class RangoApi(private val baseUrl: String = ApiBaseUrl) {
@@ -82,6 +83,7 @@ class RangoApi(private val baseUrl: String = ApiBaseUrl) {
     }
 
     // Abertura do app: se houver refresh token salvo, renova a sessão.
+    // Sem rede, a sessão continua valendo (o app abre com as cópias locais) e é renovada na próxima chamada.
     suspend fun restoreSession(): Boolean {
         refreshToken = SessionStorage.readRefreshToken() ?: return false
         keepSignedIn = true
@@ -89,7 +91,7 @@ class RangoApi(private val baseUrl: String = ApiBaseUrl) {
             refreshSession(expiredToken = null)
             true
         } catch (e: ApiException) {
-            false
+            e.code == NetworkError
         }
     }
 
@@ -264,6 +266,8 @@ class RangoApi(private val baseUrl: String = ApiBaseUrl) {
         auth: Boolean,
         block: HttpRequestBuilder.() -> Unit,
     ): HttpResponse {
+        // Sessão restaurada sem rede: ainda não há access token, então renova antes de chamar.
+        if (auth && accessToken == null && refreshToken != null) refreshSession(expiredToken = null)
         val usedToken = accessToken
         val response = rawSend(method, path, auth, block)
         if (response.status.isSuccess()) return response
