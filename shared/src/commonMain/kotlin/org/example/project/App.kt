@@ -1,20 +1,29 @@
 package org.example.project
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -25,8 +34,12 @@ import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.currentStateAsState
@@ -63,8 +76,13 @@ import org.example.project.ui.settings.SettingsScreen
 import org.example.project.ui.settings.ThemeScreen
 import org.example.project.ui.signup.SignupScreen
 import org.example.project.ui.theme.RangoColors
+import org.example.project.ui.theme.RangoIcons
 import org.example.project.ui.theme.RangoTheme
 import org.example.project.ui.welcome.WelcomeScreen
+
+// Intervalo entre as tentativas de reconectar enquanto o app está offline.
+private const val OfflineRetryMs = 10_000L
+private val OfflineBannerColor = Color(0xFF3A3A3F)
 
 private enum class Screen {
     Splash, Welcome, Login, Signup, Home, ProductDetail, Cart, Checkout, Address, Payment, OrderPlaced, Tracking,
@@ -132,13 +150,24 @@ fun App(onDarkThemeChange: (Boolean) -> Unit = {}) {
         }
     }
 
+    // Offline: tenta voltar a falar com o servidor de tempos em tempos (só com o app na tela).
+    LaunchedEffect(store.offline, visible) {
+        while (store.offline && visible) {
+            delay(OfflineRetryMs)
+            store.retryConnection()
+        }
+    }
+
     // Ao abrir as abas, atualiza os pedidos (lista e badge de "Pedidos").
+    // Offline não busca: a faixa já avisa, e cada busca viraria um aviso de erro.
     LaunchedEffect(screen) {
+        if (store.offline) return@LaunchedEffect
         if (screen in TabScreens) store.loadOrders()
         if (screen == Screen.Search) store.loadSearchHome()
         if (screen == Screen.Favorites) store.loadFavorites()
         if (screen == Screen.Profile) store.loadProfile()
         if (screen == Screen.EditProfile && store.profile == null) store.loadProfile()
+        if (screen == Screen.Cart) store.loadCart()
     }
 
     fun openCart(from: Screen) {
@@ -225,7 +254,13 @@ fun App(onDarkThemeChange: (Boolean) -> Unit = {}) {
     RangoTheme(darkTheme = darkTheme) {
         Box(Modifier.fillMaxSize()) {
             Column(Modifier.fillMaxSize()) {
-                Box(Modifier.weight(1f)) {
+                if (store.offline) OfflineBanner()
+                Box(
+                    Modifier
+                        .weight(1f)
+                        // A faixa já ocupa o espaço da barra de status; as telas abaixo não somam de novo.
+                        .then(if (store.offline) Modifier.consumeWindowInsets(WindowInsets.statusBars) else Modifier),
+                ) {
                     stateHolder.SaveableStateProvider(screen.name) {
                         when (screen) {
                             Screen.Splash -> Splash()
@@ -314,7 +349,14 @@ fun App(onDarkThemeChange: (Boolean) -> Unit = {}) {
                                 onOpenProduct = { id -> openProduct(id, Screen.Cart) },
                                 onCouponChange = store::changeCoupon,
                                 onApplyCoupon = store::applyCoupon,
-                                onCheckout = { screen = Screen.Checkout },
+                                onCheckout = {
+                                    // Sem rede o carrinho continua visível, mas o pedido precisa do servidor.
+                                    if (store.offline) {
+                                        store.message = "Você está offline. Conecte-se para finalizar o pedido."
+                                    } else {
+                                        screen = Screen.Checkout
+                                    }
+                                },
                                 onExplore = { screen = Screen.Home },
                                 totals = store.cart.totals,
                                 products = store.products,
@@ -499,6 +541,32 @@ fun App(onDarkThemeChange: (Boolean) -> Unit = {}) {
                     .padding(bottom = if (showNavBar) 64.dp else 0.dp),
             )
         }
+    }
+}
+
+// Faixa do protótipo, logo abaixo da barra de status, enquanto o app mostra as cópias locais.
+@Composable
+private fun OfflineBanner() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surface)
+            .windowInsetsPadding(WindowInsets.statusBars)
+            .background(OfflineBannerColor)
+            .padding(horizontal = 18.dp, vertical = 9.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Icon(RangoIcons.CloudOff, contentDescription = null, tint = Color.White, modifier = Modifier.size(17.dp))
+        Text("Você está offline", color = Color.White, fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
+        Text(
+            "Exibindo dados salvos no dispositivo.",
+            color = Color(0xFFC7C7CC),
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Medium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 

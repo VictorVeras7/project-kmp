@@ -64,7 +64,7 @@ fun SettingsScreen(
                 "Limpar dados locais",
                 onClearLocalData,
                 first = false,
-                hint = "sessão salva neste aparelho",
+                hint = "catálogo, carrinho e sessão salvos",
                 danger = true,
             ) { Chevron() }
         }

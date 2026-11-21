@@ -32,6 +32,10 @@ import org.example.project.data.SampleAddons
 import org.example.project.data.ThemeMode
 import org.example.project.data.UserProfile
 import org.example.project.data.remote.ApiException
+import org.example.project.data.remote.CartDto
+import org.example.project.data.remote.HomeDto
+import org.example.project.data.remote.LocalCache
+import org.example.project.data.remote.NetworkError
 import org.example.project.data.remote.NewAddressRequest
 import org.example.project.data.remote.ProductDto
 import org.example.project.data.remote.RangoApi
@@ -130,6 +134,11 @@ class RangoStore(private val api: RangoApi, private val scope: CoroutineScope) {
     // Mensagem de erro para o aviso na parte de baixo da tela; o App limpa depois de mostrar.
     var message by mutableStateOf<String?>(null)
 
+    // Sem rede: o app mostra as cópias locais (catálogo e carrinho) com a faixa "Você está offline".
+    var offline by mutableStateOf(false)
+        private set
+    private val cache = LocalCache()
+
     private var categorySlugs = mapOf<String, String>()
 
     val selectedAddress: DeliveryAddress?
@@ -173,8 +182,15 @@ class RangoStore(private val api: RangoApi, private val scope: CoroutineScope) {
 
     suspend fun restoreSession(): Boolean {
         if (!api.restoreSession()) return false
+        // Primeiro as cópias locais; a resposta do servidor substitui quando chegar.
+        showCachedData()
         loadAll()
         return true
+    }
+
+    // Enquanto offline, o App tenta de novo de tempos em tempos; sem rede, continua com as cópias, sem aviso.
+    suspend fun retryConnection() {
+        if (offline) loadAll()
     }
 
     fun onSessionExpired(action: () -> Unit) {
@@ -193,6 +209,8 @@ class RangoStore(private val api: RangoApi, private val scope: CoroutineScope) {
     }
 
     private fun clear() {
+        cache.clear()
+        offline = false
         userName = ""
         profile = null
         avatar = null
@@ -223,9 +241,9 @@ class RangoStore(private val api: RangoApi, private val scope: CoroutineScope) {
     }
 
     // Carrega tudo o que a Home e o checkout precisam, em paralelo; devolve se deu certo.
+    // coroutineScope: se uma chamada falhar, as outras são canceladas e o erro chega aqui.
     private suspend fun loadAll(): Boolean {
-        // coroutineScope: se uma chamada falhar, as outras são canceladas e o erro chega ao safely.
-        return safely {
+        return try {
             coroutineScope {
                 val home = async { api.home() }
                 val cartDto = async { api.cart() }
@@ -239,20 +257,46 @@ class RangoStore(private val api: RangoApi, private val scope: CoroutineScope) {
                 val settings = async { api.settings() }
 
                 val homeDto = home.await()
-                userName = homeDto.user.name
-                categorySlugs = homeDto.categories.associate { it.name to it.slug }
-                mergeProducts(homeDto.sections.flatMap { it.products })
+                cache.home = homeDto
+                applyHome(homeDto)
                 setFavorites(favorites.await())
 
                 addresses = addressList.await().map { it.toAddress() }
                 selectedAddressId = addressList.await().firstOrNull { it.isSelected }?.id ?: homeDto.selectedAddress?.id
                 payments = paymentList.await().mapNotNull { it.toOption() }
                 payment = payment?.let { current -> payments.firstOrNull { it.id == current.id } } ?: payments.firstOrNull()
-                setCart(cartDto.await().toCart())
+                setCart(cartDto.await())
                 liveOrders = live.await().map { it.toSummary() }
                 applySettings(settings.await())
             }
-        } != null
+            offline = false
+            true
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: ApiException) {
+            // Sem rede e com cópia salva: mostra a cópia com a faixa offline, sem aviso de erro.
+            if (e.code == NetworkError && showCachedData()) offline = true else message = e.message
+            false
+        } catch (e: Exception) {
+            message = "Algo deu errado. Tente novamente."
+            false
+        }
+    }
+
+    private fun applyHome(dto: HomeDto) {
+        userName = dto.user.name
+        categorySlugs = dto.categories.associate { it.name to it.slug }
+        mergeProducts(dto.sections.flatMap { it.products })
+    }
+
+    // Mostra o catálogo e o carrinho salvos no aparelho; devolve se havia catálogo salvo.
+    private suspend fun showCachedData(): Boolean {
+        val home = cache.home ?: return false
+        applyHome(home)
+        // Sem a lista de endereços (offline), o cabeçalho da Home usa o endereço que veio com a Home.
+        if (addresses.isEmpty()) addresses = listOfNotNull(home.selectedAddress?.toAddress())
+        cache.cart?.let { showCart(it.toCart(), fetchMissing = false) }
+        return true
     }
 
     // Catálogo
@@ -511,6 +555,8 @@ class RangoStore(private val api: RangoApi, private val scope: CoroutineScope) {
             if (loadAll()) {
                 loadProfile()
                 message = "Dados sincronizados."
+            } else if (offline) {
+                message = "Sem conexão. Exibindo dados salvos no aparelho."
             }
         }
     }
@@ -525,7 +571,7 @@ class RangoStore(private val api: RangoApi, private val scope: CoroutineScope) {
     // Carrinho
 
     fun addToCart(productId: String, quantity: Int, addonIds: Set<String> = emptySet(), notes: String = "") {
-        launchSafely { setCart(api.addToCart(productId, quantity, addonIds, notes).toCart()) }
+        launchSafely { setCart(api.addToCart(productId, quantity, addonIds, notes)) }
     }
 
     fun changeQuantity(key: String, delta: Int) {
@@ -533,19 +579,20 @@ class RangoStore(private val api: RangoApi, private val scope: CoroutineScope) {
         val quantity = line.quantity + delta
         launchSafely {
             val updated = if (quantity <= 0) api.removeLine(line.lineId) else api.setQuantity(line.lineId, quantity)
-            setCart(updated.toCart())
+            setCart(updated)
         }
     }
 
     fun removeLine(key: String) {
         val line = cart.items.firstOrNull { it.key == key } ?: return
-        launchSafely { setCart(api.removeLine(line.lineId).toCart()) }
+        launchSafely { setCart(api.removeLine(line.lineId)) }
     }
 
     fun clearCart() {
         launchSafely {
             api.clearCart()
-            setCart(Cart())
+            cache.cart = null
+            showCart(Cart())
             couponInput = ""
         }
     }
@@ -553,24 +600,35 @@ class RangoStore(private val api: RangoApi, private val scope: CoroutineScope) {
     // Editar o código depois de aplicado tira o cupom, como no protótipo.
     fun changeCoupon(text: String) {
         couponInput = text
-        if (cart.couponApplied) launchSafely { setCart(api.removeCoupon().toCart()) }
+        if (cart.couponApplied) launchSafely { setCart(api.removeCoupon()) }
     }
 
     suspend fun applyCoupon() {
         try {
-            setCart(api.applyCoupon(couponInput).toCart())
+            setCart(api.applyCoupon(couponInput))
         } catch (e: ApiException) {
             // Cupom recusado aparece no próprio campo ("Cupom inválido."); outros erros viram aviso.
             if (e.code !in CouponErrors) message = e.message
         }
     }
 
-    private suspend fun setCart(value: Cart) {
+    // Abertura do carrinho: mostra a cópia que já está na tela e troca pela do servidor quando ela chegar.
+    fun loadCart() {
+        launchSafely { setCart(api.cart()) }
+    }
+
+    // Toda resposta do carrinho vira a nova cópia local.
+    private suspend fun setCart(dto: CartDto) {
+        cache.cart = dto
+        showCart(dto.toCart())
+    }
+
+    private suspend fun showCart(value: Cart, fetchMissing: Boolean = true) {
         cart = value
         value.couponCode?.let { couponInput = it }
         // Linhas de produtos que ainda não estão no catálogo local (ex.: carrinho de outra sessão).
         val missing = value.items.map { it.productId }.filter { id -> products.none { it.id == id } }.distinct()
-        if (missing.isNotEmpty()) mergeProducts(missing.map { api.product(it) })
+        if (fetchMissing && missing.isNotEmpty()) mergeProducts(missing.map { api.product(it) })
     }
 
     // Endereços e pagamento
@@ -630,6 +688,7 @@ class RangoStore(private val api: RangoApi, private val scope: CoroutineScope) {
             if (notificationPrefs.orders) LocalNotifications.requestPermission()
             // O servidor esvazia o carrinho ao criar o pedido.
             cart = Cart()
+            cache.cart = null
             couponInput = ""
             loadOrders()
         } != null
@@ -662,7 +721,7 @@ class RangoStore(private val api: RangoApi, private val scope: CoroutineScope) {
     // "Pedir novamente": o servidor troca o carrinho pelos itens do pedido.
     suspend fun reorder(id: Int): Boolean = safely {
         val result = api.reorder(id)
-        setCart(result.cart.toCart())
+        setCart(result.cart)
         couponInput = ""
         message = if (result.skippedProductIds.isEmpty()) {
             "Itens adicionados ao carrinho."
