@@ -50,6 +50,7 @@ import org.example.project.data.remote.toPrefs
 import org.example.project.data.remote.toProfile
 import org.example.project.data.remote.toThemeMode
 import org.example.project.data.remote.toUpdateRequest
+import org.example.project.platform.LocalNotifications
 import org.example.project.data.remote.toProduct
 import org.example.project.data.remote.toSummary
 import org.example.project.ui.signup.SignupData
@@ -493,6 +494,7 @@ class RangoStore(private val api: RangoApi, private val scope: CoroutineScope) {
     fun changeNotificationPrefs(prefs: NotificationPrefs) {
         val previous = notificationPrefs
         notificationPrefs = prefs
+        if (prefs.orders && !previous.orders) LocalNotifications.requestPermission()
         scope.launch {
             try {
                 api.updateSettings(UpdateSettingsRequest(notifications = prefs.toDto()))
@@ -624,6 +626,8 @@ class RangoStore(private val api: RangoApi, private val scope: CoroutineScope) {
         val option = payment ?: return false
         return safely {
             order = api.createOrder(option.id).toOrder()
+            // Primeiro pedido: pede a permissão para avisar as próximas etapas.
+            if (notificationPrefs.orders) LocalNotifications.requestPermission()
             // O servidor esvazia o carrinho ao criar o pedido.
             cart = Cart()
             couponInput = ""
@@ -670,7 +674,14 @@ class RangoStore(private val api: RangoApi, private val scope: CoroutineScope) {
     // Consulta o pedido atual; usado em polling enquanto ele está em andamento.
     suspend fun refreshOrder() {
         val current = order ?: return
-        safely { order = api.order(current.id).toOrder() }
+        safely {
+            val updated = api.order(current.id).toOrder()
+            order = updated
+            // Etapa nova: avisa com uma notificação do sistema, se "Pedidos" estiver ligado nas configurações.
+            if (updated.id == current.id && updated.step.ordinal > current.step.ordinal && notificationPrefs.orders) {
+                LocalNotifications.show(updated.id, updated.step.label, "${updated.hint} · ${updated.code}")
+            }
+        }
     }
 
     // Infra
