@@ -12,6 +12,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import org.example.project.data.remote.SessionStorage
+import org.example.project.platform.LocalNotifications
 
 // Android 17+ exige essa permissão para o app acessar o backend na rede local (10.0.2.2 no emulador).
 private const val LocalNetworkPermission = "android.permission.ACCESS_LOCAL_NETWORK"
@@ -24,6 +25,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         SessionStorage.init(applicationContext)
+        LocalNotifications.init(this)
 
         if (Build.VERSION.SDK_INT >= Android17 &&
             checkSelfPermission(LocalNetworkPermission) != PackageManager.PERMISSION_GRANTED
