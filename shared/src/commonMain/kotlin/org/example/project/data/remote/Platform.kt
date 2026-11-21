@@ -1,6 +1,6 @@
 package org.example.project.data.remote
 
-// Endereço do backend em cada plataforma (o emulador Android enxerga a máquina em 10.0.2.2).
+// Endereço do backend em cada plataforma (localhost nas duas; no Android, via `adb reverse`).
 expect val ApiBaseUrl: String
 
 // Armazenamento chave-valor do aparelho: SharedPreferences no Android e NSUserDefaults no iOS.

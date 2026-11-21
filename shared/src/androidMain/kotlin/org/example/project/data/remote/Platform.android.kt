@@ -3,7 +3,9 @@ package org.example.project.data.remote
 import android.content.Context
 import android.content.SharedPreferences
 
-actual val ApiBaseUrl: String = "http://10.0.2.2:3333"
+// localhost no próprio aparelho, redirecionado para a máquina com `adb reverse tcp:3333 tcp:3333`.
+// Funciona no emulador e no celular pelo cabo, sem depender do Wi-Fi nem do IP da máquina.
+actual val ApiBaseUrl: String = "http://localhost:3333"
 
 actual object LocalStore {
     private var prefs: SharedPreferences? = null
