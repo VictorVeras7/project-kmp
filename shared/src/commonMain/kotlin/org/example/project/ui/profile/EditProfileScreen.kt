@@ -334,3 +334,21 @@ private fun PhotoAction(icon: ImageVector, label: String, danger: Boolean, onCli
         )
     }
 }
+
+private val PreviewProfile = UserProfile(name = "Marina Alves", email = "marina.alves@email.com", phone = "(11) 98876-4410")
+
+@Preview
+@Composable
+private fun EditProfileScreenPreview() {
+    RangoTheme(darkTheme = false) {
+        EditProfileScreen(PreviewProfile, avatar = null, onBack = {}, onSave = { _, _, _ -> emptyMap() }, onTakePhoto = {}, onRemovePhoto = {})
+    }
+}
+
+@Preview
+@Composable
+private fun EditProfileScreenDarkPreview() {
+    RangoTheme(darkTheme = true) {
+        EditProfileScreen(PreviewProfile, avatar = null, onBack = {}, onSave = { _, _, _ -> emptyMap() }, onTakePhoto = {}, onRemovePhoto = {})
+    }
+}
