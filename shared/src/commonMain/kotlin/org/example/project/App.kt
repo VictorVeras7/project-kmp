@@ -371,6 +371,7 @@ fun App(onDarkThemeChange: (Boolean) -> Unit = {}) {
                             Screen.Profile -> ProfileScreen(
                                 // Até GET /me responder, mostra o nome que veio da Home.
                                 profile = store.profile ?: UserProfile(store.userName, "", ""),
+                                avatar = store.avatar,
                                 addressCount = store.addresses.size,
                                 paymentCount = store.payments.size,
                                 unreadNotifications = store.unreadNotifications,

@@ -33,6 +33,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -41,7 +42,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.example.project.data.ThemeMode
 import org.example.project.data.UserProfile
-import org.example.project.data.avatarInitials
 import org.example.project.ui.theme.RangoColors
 import org.example.project.ui.theme.RangoIcons
 import org.example.project.ui.theme.RangoTheme
@@ -49,6 +49,7 @@ import org.example.project.ui.theme.RangoTheme
 @Composable
 fun ProfileScreen(
     profile: UserProfile,
+    avatar: ImageBitmap?,
     addressCount: Int,
     paymentCount: Int,
     unreadNotifications: Int,
@@ -84,6 +85,7 @@ fun ProfileScreen(
         ) {
             ProfileHeader(
                 profile = profile,
+                avatar = avatar,
                 hasUnread = unreadNotifications > 0,
                 onOpenNotifications = onOpenNotifications,
                 onEditProfile = onEditProfile,
@@ -128,6 +130,7 @@ private fun unreadHint(count: Int): String = when (count) {
 @Composable
 private fun ProfileHeader(
     profile: UserProfile,
+    avatar: ImageBitmap?,
     hasUnread: Boolean,
     onOpenNotifications: () -> Unit,
     onEditProfile: () -> Unit,
@@ -152,15 +155,13 @@ private fun ProfileHeader(
                 BellButton(hasUnread = hasUnread, onClick = onOpenNotifications)
             }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                Box(
-                    modifier = Modifier
-                        .size(66.dp)
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f), RoundedCornerShape(22.dp))
-                        .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(22.dp)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(avatarInitials(profile.name), color = RangoColors.Primary, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
-                }
+                AvatarImage(
+                    name = profile.name,
+                    avatar = avatar,
+                    shape = RoundedCornerShape(22.dp),
+                    fontSize = 21,
+                    modifier = Modifier.size(66.dp),
+                )
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                     Text(
                         profile.name,
@@ -272,6 +273,7 @@ private fun ProfileScreenPreview() {
     RangoTheme(darkTheme = false) {
         ProfileScreen(
             profile = PreviewProfile,
+            avatar = null,
             addressCount = 2,
             paymentCount = 4,
             unreadNotifications = 2,
@@ -294,6 +296,7 @@ private fun ProfileScreenDarkPreview() {
     RangoTheme(darkTheme = true) {
         ProfileScreen(
             profile = PreviewProfile,
+            avatar = null,
             addressCount = 1,
             paymentCount = 4,
             unreadNotifications = 0,
