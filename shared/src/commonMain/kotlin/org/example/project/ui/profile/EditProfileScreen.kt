@@ -154,6 +154,21 @@ fun EditProfileScreen(
             }
         }
     }
+
+    if (photoSheet) {
+        PhotoSheet(
+            hasPhoto = avatar != null,
+            onDismiss = { photoSheet = false },
+            onTakePhoto = {
+                photoSheet = false
+                onTakePhoto()
+            },
+            onRemovePhoto = {
+                photoSheet = false
+                onRemovePhoto()
+            },
+        )
+    }
 }
 
 // Cabeçalho com voltar, título e "Salvar" em laranja, como no protótipo.
@@ -237,5 +252,85 @@ internal fun AvatarImage(
         } else {
             Text(avatarInitials(name), color = RangoColors.Primary, fontSize = fontSize.sp, fontWeight = FontWeight.ExtraBold)
         }
+    }
+}
+
+// Folha "Foto do perfil": tirar foto pela câmera ou remover a atual.
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PhotoSheet(hasPhoto: Boolean, onDismiss: () -> Unit, onTakePhoto: () -> Unit, onRemovePhoto: () -> Unit) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        shape = RoundedCornerShape(topStart = 26.dp, topEnd = 26.dp),
+        containerColor = MaterialTheme.colorScheme.surface,
+        scrimColor = Color.Black.copy(alpha = 0.45f),
+        dragHandle = {
+            Box(
+                Modifier
+                    .padding(top = 12.dp)
+                    .width(44.dp)
+                    .height(4.5.dp)
+                    .background(MaterialTheme.colorScheme.outline, RoundedCornerShape(3.dp)),
+            )
+        },
+    ) {
+        Column(
+            modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 18.dp)
+                .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom)),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text(
+                "Foto do perfil",
+                color = MaterialTheme.colorScheme.onSurface,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.ExtraBold,
+                modifier = Modifier.padding(horizontal = 4.dp),
+            )
+            PhotoAction(RangoIcons.Camera, "Tirar foto", danger = false, onClick = onTakePhoto)
+            if (hasPhoto) PhotoAction(RangoIcons.Trash, "Remover foto", danger = true, onClick = onRemovePhoto)
+            val shape = RoundedCornerShape(16.dp)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp)
+                    .clip(shape)
+                    .border(1.5.dp, MaterialTheme.colorScheme.outline, shape)
+                    .clickable(onClick = onDismiss),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text("Cancelar", color = MaterialTheme.colorScheme.onSurface, fontSize = 14.5.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+}
+
+@Composable
+private fun PhotoAction(icon: ImageVector, label: String, danger: Boolean, onClick: () -> Unit) {
+    val shape = RoundedCornerShape(17.dp)
+    val accent = if (danger) RangoColors.Error else RangoColors.Primary
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(MaterialTheme.colorScheme.surfaceVariant, shape)
+            .border(1.dp, MaterialTheme.colorScheme.outline, shape)
+            .clickable(onClick = onClick)
+            .padding(14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Box(
+            modifier = Modifier.size(36.dp).background(accent.copy(alpha = 0.12f), RoundedCornerShape(12.dp)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(icon, contentDescription = null, tint = accent, modifier = Modifier.size(19.dp))
+        }
+        Text(
+            label,
+            color = if (danger) RangoColors.Error else MaterialTheme.colorScheme.onSurface,
+            fontSize = 14.5.sp,
+            fontWeight = FontWeight.Bold,
+        )
     }
 }
