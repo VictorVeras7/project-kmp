@@ -27,6 +27,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.currentStateAsState
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
@@ -116,9 +119,12 @@ fun App(onDarkThemeChange: (Boolean) -> Unit = {}) {
     }
 
     // Enquanto o pedido está em andamento, consulta o servidor para atualizar a etapa.
+    // Só com o app na tela: em segundo plano o Android corta a rede e cada consulta viraria um aviso de erro.
     val order = store.order
-    LaunchedEffect(screen, order?.id, order?.isLive) {
-        if (order != null && order.isLive && (screen == Screen.OrderPlaced || screen == Screen.Tracking)) {
+    val lifecycle by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
+    val visible = lifecycle.isAtLeast(Lifecycle.State.STARTED)
+    LaunchedEffect(screen, order?.id, order?.isLive, visible) {
+        if (visible && order != null && order.isLive && (screen == Screen.OrderPlaced || screen == Screen.Tracking)) {
             while (true) {
                 delay(OrderPollIntervalMs)
                 store.refreshOrder()
