@@ -37,7 +37,11 @@ android {
     }
     buildTypes {
         release {
-            isMinifyEnabled = false
+            // Medição do TCC: release otimizado como o do Flutter (AOT), com R8 e recursos não usados removidos.
+            isMinifyEnabled = true
+            isShrinkResources = true
+            // Assinado com a chave de debug só para instalar e medir (o template do Flutter faz o mesmo).
+            signingConfig = signingConfigs.getByName("debug")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
