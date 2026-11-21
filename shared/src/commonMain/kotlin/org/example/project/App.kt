@@ -27,6 +27,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigationevent.NavigationEventInfo
+import androidx.navigationevent.compose.NavigationBackHandler
+import androidx.navigationevent.compose.rememberNavigationEventState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.example.project.data.OrderPollIntervalMs
@@ -146,6 +149,32 @@ fun App(onDarkThemeChange: (Boolean) -> Unit = {}) {
         screen = Screen.ThemeSettings
     }
 
+    // Destino do voltar (botão da tela e botão do sistema). Nulo na Home e nas boas-vindas: o sistema fecha o app.
+    val backTarget: Screen? = when (screen) {
+        Screen.Splash, Screen.Welcome, Screen.Home -> null
+        Screen.Login, Screen.Signup -> Screen.Welcome
+        Screen.Search, Screen.Orders, Screen.Favorites, Screen.Profile, Screen.OrderPlaced -> Screen.Home
+        Screen.ProductDetail -> productOrigin
+        Screen.Cart -> cartOrigin
+        Screen.Checkout -> Screen.Cart
+        Screen.Address, Screen.Payment -> accountOrigin
+        Screen.Tracking -> trackingOrigin
+        Screen.OrderDetail -> Screen.Orders
+        Screen.Settings -> Screen.Profile
+        Screen.ThemeSettings -> themeOrigin
+        Screen.NotificationSettings -> Screen.Settings
+    }
+
+    fun goBack() {
+        backTarget?.let { screen = it }
+    }
+
+    NavigationBackHandler(
+        state = rememberNavigationEventState(NavigationEventInfo.None),
+        isBackEnabled = backTarget != null,
+        onBackCompleted = ::goBack,
+    )
+
     fun reorder(id: Int, from: Screen) {
         scope.launch { if (store.reorder(id)) openCart(from) }
     }
@@ -182,14 +211,14 @@ fun App(onDarkThemeChange: (Boolean) -> Unit = {}) {
                                 onSignup = { screen = Screen.Signup },
                             )
                             Screen.Login -> LoginScreen(
-                                onBack = { screen = Screen.Welcome },
+                                onBack = ::goBack,
                                 authenticate = store::login,
                                 onLoginSuccess = { screen = Screen.Home },
                                 onForgotPassword = {},
                                 onSignup = { screen = Screen.Signup },
                             )
                             Screen.Signup -> SignupScreen(
-                                onBack = { screen = Screen.Welcome },
+                                onBack = ::goBack,
                                 register = store::register,
                                 onSignupSuccess = { screen = Screen.Home },
                                 onLogin = { screen = Screen.Login },
@@ -241,7 +270,7 @@ fun App(onDarkThemeChange: (Boolean) -> Unit = {}) {
                                     ProductDetailScreen(
                                         product = product,
                                         isFavorite = product.id in store.favoriteIds,
-                                        onBack = { screen = productOrigin },
+                                        onBack = ::goBack,
                                         onToggleFavorite = { store.toggleFavorite(product.id) },
                                         onAddToCart = { quantity, addonIds, notes ->
                                             store.addToCart(product.id, quantity, addonIds, notes)
@@ -255,7 +284,7 @@ fun App(onDarkThemeChange: (Boolean) -> Unit = {}) {
                                 items = store.cart.items,
                                 coupon = store.couponInput,
                                 couponApplied = store.cart.couponApplied,
-                                onBack = { screen = cartOrigin },
+                                onBack = ::goBack,
                                 onClear = store::clearCart,
                                 onChangeQuantity = store::changeQuantity,
                                 onRemove = store::removeLine,
@@ -273,7 +302,7 @@ fun App(onDarkThemeChange: (Boolean) -> Unit = {}) {
                                 couponApplied = store.cart.couponApplied,
                                 address = store.selectedAddress,
                                 payment = store.payment,
-                                onBack = { screen = Screen.Cart },
+                                onBack = ::goBack,
                                 onChangeAddress = { openAccountScreen(Screen.Address, Screen.Checkout) },
                                 onChangePayment = { openAccountScreen(Screen.Payment, Screen.Checkout) },
                                 onConfirmOrder = {
@@ -290,13 +319,13 @@ fun App(onDarkThemeChange: (Boolean) -> Unit = {}) {
                                 selectedIndex = store.addresses.indexOf(store.selectedAddress),
                                 onSelect = store::selectAddress,
                                 onSaveAddress = store::saveAddress,
-                                onBack = { screen = accountOrigin },
+                                onBack = ::goBack,
                             )
                             Screen.Payment -> PaymentScreen(
                                 options = store.payments,
                                 selected = store.payment,
                                 onSelect = { store.payment = it },
-                                onBack = { screen = accountOrigin },
+                                onBack = ::goBack,
                             )
                             Screen.OrderPlaced -> store.order?.let { placed ->
                                 OrderPlacedScreen(
@@ -309,7 +338,7 @@ fun App(onDarkThemeChange: (Boolean) -> Unit = {}) {
                                 )
                             }
                             Screen.Tracking -> store.order?.let { tracked ->
-                                OrderTrackingScreen(order = tracked, onBack = { screen = trackingOrigin })
+                                OrderTrackingScreen(order = tracked, onBack = ::goBack)
                             }
                             Screen.Orders -> OrdersScreen(
                                 liveOrders = store.liveOrders,
@@ -362,7 +391,7 @@ fun App(onDarkThemeChange: (Boolean) -> Unit = {}) {
                             )
                             Screen.Settings -> SettingsScreen(
                                 theme = store.theme,
-                                onBack = { screen = Screen.Profile },
+                                onBack = ::goBack,
                                 onTheme = { openTheme(Screen.Settings) },
                                 onNotifications = { screen = Screen.NotificationSettings },
                                 onLanguage = { store.message = "Por enquanto, o app está disponível apenas em português." },
@@ -382,12 +411,12 @@ fun App(onDarkThemeChange: (Boolean) -> Unit = {}) {
                             Screen.ThemeSettings -> ThemeScreen(
                                 theme = store.theme,
                                 onSelect = store::changeTheme,
-                                onBack = { screen = themeOrigin },
+                                onBack = ::goBack,
                             )
                             Screen.NotificationSettings -> NotificationSettingsScreen(
                                 prefs = store.notificationPrefs,
                                 onChange = store::changeNotificationPrefs,
-                                onBack = { screen = Screen.Settings },
+                                onBack = ::goBack,
                             )
                             Screen.OrderDetail -> {
                                 val detail = store.orderDetail?.takeIf { it.id == detailId }
@@ -396,7 +425,7 @@ fun App(onDarkThemeChange: (Boolean) -> Unit = {}) {
                                 } else {
                                     OrderDetailScreen(
                                         order = detail,
-                                        onBack = { screen = Screen.Orders },
+                                        onBack = ::goBack,
                                         onReorder = { if (store.reorder(detail.id)) openCart(Screen.OrderDetail) },
                                     )
                                 }
