@@ -3,6 +3,7 @@ package org.example.project
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.ImageBitmap
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -10,6 +11,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.decodeToImageBitmap
 import org.example.project.data.AddressForm
 import org.example.project.data.AnyDeliveryTime
 import org.example.project.data.Cart
@@ -35,6 +37,7 @@ import org.example.project.data.remote.ProductDto
 import org.example.project.data.remote.RangoApi
 import org.example.project.data.remote.RegisterRequest
 import org.example.project.data.remote.SettingsDto
+import org.example.project.data.remote.UpdateProfileRequest
 import org.example.project.data.remote.UpdateSettingsRequest
 import org.example.project.data.remote.toAddon
 import org.example.project.data.remote.toAddress
@@ -46,6 +49,7 @@ import org.example.project.data.remote.toOrder
 import org.example.project.data.remote.toPrefs
 import org.example.project.data.remote.toProfile
 import org.example.project.data.remote.toThemeMode
+import org.example.project.data.remote.toUpdateRequest
 import org.example.project.data.remote.toProduct
 import org.example.project.data.remote.toSummary
 import org.example.project.ui.signup.SignupData
@@ -114,6 +118,10 @@ class RangoStore(private val api: RangoApi, private val scope: CoroutineScope) {
         private set
     var unreadNotifications by mutableStateOf(0)
         private set
+    // Foto de perfil já decodificada; nula mostra as iniciais.
+    var avatar by mutableStateOf<ImageBitmap?>(null)
+        private set
+    private var avatarUrl: String? = null
     // Configurações: quais notificações o usuário quer receber.
     var notificationPrefs by mutableStateOf(NotificationPrefs())
         private set
@@ -186,6 +194,8 @@ class RangoStore(private val api: RangoApi, private val scope: CoroutineScope) {
     private fun clear() {
         userName = ""
         profile = null
+        avatar = null
+        avatarUrl = null
         theme = ThemeMode.System
         unreadNotifications = 0
         notificationPrefs = NotificationPrefs()
@@ -404,10 +414,57 @@ class RangoStore(private val api: RangoApi, private val scope: CoroutineScope) {
                 val me = async { api.me() }
                 val settings = async { api.settings() }
                 val unread = async { api.unreadNotifications() }
-                profile = me.await().toProfile().also { userName = it.name }
+                setProfile(me.await().toProfile())
                 applySettings(settings.await())
                 unreadNotifications = unread.await()
             }
+        }
+    }
+
+    // Editar perfil
+
+    private suspend fun setProfile(value: UserProfile) {
+        profile = value
+        userName = value.name
+        val url = value.avatarUrl
+        if (url == avatarUrl) return
+        avatarUrl = url
+        // Foto nova: baixa e decodifica; se falhar, as iniciais continuam aparecendo.
+        avatar = url?.let { path -> runCatching { api.download(path).decodeToImageBitmap() }.getOrNull() }
+    }
+
+    // Devolve os erros por campo (vazio = salvo), como no login e no cadastro.
+    suspend fun updateProfile(name: String, email: String, phone: String): Map<String, String> = try {
+        setProfile(api.updateProfile(UpdateProfileRequest(name.trim(), email.trim(), phone.trim())).toProfile())
+        message = "Perfil atualizado com sucesso."
+        emptyMap()
+    } catch (e: ApiException) {
+        when {
+            e.code == "EMAIL_IN_USE" -> mapOf("email" to e.message)
+            e.fields.isNotEmpty() -> e.fields
+            else -> {
+                message = e.message
+                mapOf("" to e.message)
+            }
+        }
+    }
+
+    // Foto tirada pela câmera (JPEG quadrado vindo da plataforma).
+    fun changeAvatar(jpeg: ByteArray) {
+        launchSafely {
+            val updated = api.uploadAvatar(jpeg).toProfile()
+            // Mostra a foto local na hora, sem baixar de novo do servidor.
+            avatar = jpeg.decodeToImageBitmap()
+            avatarUrl = updated.avatarUrl
+            setProfile(updated)
+            message = "Foto atualizada."
+        }
+    }
+
+    fun removeAvatar() {
+        launchSafely {
+            setProfile(api.removeAvatar().toProfile())
+            message = "Foto removida."
         }
     }
 
@@ -544,6 +601,21 @@ class RangoStore(private val api: RangoApi, private val scope: CoroutineScope) {
         ).toAddress()
         addresses = addresses + saved
         selectedAddressId = saved.id
+    } != null
+
+    suspend fun updateAddress(id: Int, form: AddressForm): Boolean = safely {
+        val saved = api.updateAddress(id, form.toUpdateRequest()).toAddress()
+        addresses = addresses.map { if (it.id == id) saved else it }
+        message = "Endereço atualizado."
+    } != null
+
+    // O servidor escolhe outro endereço de entrega se o removido era o selecionado: recarrega a lista.
+    suspend fun deleteAddress(id: Int): Boolean = safely {
+        api.deleteAddress(id)
+        val list = api.addresses()
+        addresses = list.map { it.toAddress() }
+        selectedAddressId = list.firstOrNull { it.isSelected }?.id
+        message = "Endereço removido."
     } != null
 
     // Pedidos

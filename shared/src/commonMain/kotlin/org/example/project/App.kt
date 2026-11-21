@@ -51,6 +51,8 @@ import org.example.project.ui.order.OrderPlacedScreen
 import org.example.project.ui.order.OrderTrackingScreen
 import org.example.project.ui.order.OrdersScreen
 import org.example.project.ui.product.ProductDetailScreen
+import org.example.project.platform.rememberCameraLauncher
+import org.example.project.ui.profile.EditProfileScreen
 import org.example.project.ui.profile.ProfileScreen
 import org.example.project.ui.search.SearchScreen
 import org.example.project.ui.settings.NotificationSettingsScreen
@@ -63,7 +65,7 @@ import org.example.project.ui.welcome.WelcomeScreen
 
 private enum class Screen {
     Splash, Welcome, Login, Signup, Home, ProductDetail, Cart, Checkout, Address, Payment, OrderPlaced, Tracking,
-    Orders, OrderDetail, Search, Favorites, Profile, Settings, ThemeSettings, NotificationSettings,
+    Orders, OrderDetail, Search, Favorites, Profile, Settings, ThemeSettings, NotificationSettings, EditProfile,
 }
 
 // Telas com a barra de navegação inferior e a aba que cada uma marca.
@@ -92,6 +94,8 @@ fun App(onDarkThemeChange: (Boolean) -> Unit = {}) {
     var accountOrigin by remember { mutableStateOf(Screen.Checkout) }
     // Tema abre do perfil ou das configurações.
     var themeOrigin by remember { mutableStateOf(Screen.Settings) }
+    // Editar perfil abre do perfil ou de "Dados pessoais" nas configurações.
+    var editProfileOrigin by remember { mutableStateOf(Screen.Profile) }
     var detailId by remember { mutableStateOf<Int?>(null) }
     // Mantém o estado da Home (categoria e scroll) ao abrir e voltar do produto.
     val stateHolder = rememberSaveableStateHolder()
@@ -128,6 +132,7 @@ fun App(onDarkThemeChange: (Boolean) -> Unit = {}) {
         if (screen == Screen.Search) store.loadSearchHome()
         if (screen == Screen.Favorites) store.loadFavorites()
         if (screen == Screen.Profile) store.loadProfile()
+        if (screen == Screen.EditProfile && store.profile == null) store.loadProfile()
     }
 
     fun openCart(from: Screen) {
@@ -143,6 +148,17 @@ fun App(onDarkThemeChange: (Boolean) -> Unit = {}) {
     fun comingSoon(feature: String) {
         store.message = "$feature estará disponível em breve."
     }
+
+    fun openEditProfile(from: Screen) {
+        editProfileOrigin = from
+        screen = Screen.EditProfile
+    }
+
+    // Foto de perfil pela câmera (ponto de plataforma: expect/actual).
+    val takePhoto = rememberCameraLauncher(
+        onPhoto = store::changeAvatar,
+        onDenied = { store.message = "Permita o acesso à câmera para tirar a foto." },
+    )
 
     fun openTheme(from: Screen) {
         themeOrigin = from
@@ -163,6 +179,7 @@ fun App(onDarkThemeChange: (Boolean) -> Unit = {}) {
         Screen.Settings -> Screen.Profile
         Screen.ThemeSettings -> themeOrigin
         Screen.NotificationSettings -> Screen.Settings
+        Screen.EditProfile -> editProfileOrigin
     }
 
     fun goBack() {
@@ -319,6 +336,8 @@ fun App(onDarkThemeChange: (Boolean) -> Unit = {}) {
                                 selectedIndex = store.addresses.indexOf(store.selectedAddress),
                                 onSelect = store::selectAddress,
                                 onSaveAddress = store::saveAddress,
+                                onUpdateAddress = store::updateAddress,
+                                onDeleteAddress = store::deleteAddress,
                                 onBack = ::goBack,
                             )
                             Screen.Payment -> PaymentScreen(
@@ -371,12 +390,13 @@ fun App(onDarkThemeChange: (Boolean) -> Unit = {}) {
                             Screen.Profile -> ProfileScreen(
                                 // Até GET /me responder, mostra o nome que veio da Home.
                                 profile = store.profile ?: UserProfile(store.userName, "", ""),
+                                avatar = store.avatar,
                                 addressCount = store.addresses.size,
                                 paymentCount = store.payments.size,
                                 unreadNotifications = store.unreadNotifications,
                                 theme = store.theme,
                                 onOpenNotifications = { comingSoon("Notificações") },
-                                onEditProfile = { comingSoon("Editar perfil") },
+                                onEditProfile = { openEditProfile(Screen.Profile) },
                                 onAddresses = { openAccountScreen(Screen.Address, Screen.Profile) },
                                 onPayments = { openAccountScreen(Screen.Payment, Screen.Profile) },
                                 onSettings = { screen = Screen.Settings },
@@ -395,7 +415,7 @@ fun App(onDarkThemeChange: (Boolean) -> Unit = {}) {
                                 onTheme = { openTheme(Screen.Settings) },
                                 onNotifications = { screen = Screen.NotificationSettings },
                                 onLanguage = { store.message = "Por enquanto, o app está disponível apenas em português." },
-                                onPersonalData = { comingSoon("Editar perfil") },
+                                onPersonalData = { openEditProfile(Screen.Settings) },
                                 onAddresses = { openAccountScreen(Screen.Address, Screen.Settings) },
                                 onPayments = { openAccountScreen(Screen.Payment, Screen.Settings) },
                                 onSync = store::sync,
@@ -418,6 +438,21 @@ fun App(onDarkThemeChange: (Boolean) -> Unit = {}) {
                                 onChange = store::changeNotificationPrefs,
                                 onBack = ::goBack,
                             )
+                            Screen.EditProfile -> {
+                                val profile = store.profile
+                                if (profile == null) {
+                                    Splash()
+                                } else {
+                                    EditProfileScreen(
+                                        profile = profile,
+                                        avatar = store.avatar,
+                                        onBack = ::goBack,
+                                        onSave = store::updateProfile,
+                                        onTakePhoto = takePhoto,
+                                        onRemovePhoto = store::removeAvatar,
+                                    )
+                                }
+                            }
                             Screen.OrderDetail -> {
                                 val detail = store.orderDetail?.takeIf { it.id == detailId }
                                 if (detail == null) {

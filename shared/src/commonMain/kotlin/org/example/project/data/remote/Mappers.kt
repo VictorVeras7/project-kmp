@@ -4,6 +4,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.todayIn
 import org.example.project.data.Addon
+import org.example.project.data.AddressForm
 import org.example.project.data.Cart
 import org.example.project.data.CartItem
 import org.example.project.data.CartTotals
@@ -67,7 +68,15 @@ fun CartDto.toCart() = Cart(
     totals = CartTotals(summary.subtotal, summary.deliveryFee, summary.discount),
 )
 
-fun AddressDto.toAddress() = DeliveryAddress(label = label, line = line, city = cityLine, id = id)
+fun AddressDto.toAddress() = DeliveryAddress(
+    label = label,
+    line = line,
+    city = cityLine,
+    id = id,
+    form = AddressForm(cep, street, complement, neighborhood, city),
+)
+
+fun AddressForm.toUpdateRequest() = UpdateAddressRequest(cep, street, complement, neighborhood, city)
 
 private val MethodsByType = mapOf(
     "pix" to PaymentMethod.Pix,
@@ -79,7 +88,7 @@ private val MethodsByType = mapOf(
 fun PaymentMethodDto.toOption(): PaymentOption? =
     MethodsByType[type]?.let { PaymentOption(id, it, label, detail) }
 
-fun ProfileDto.toProfile() = UserProfile(name = name, email = email, phone = phone)
+fun ProfileDto.toProfile() = UserProfile(name = name, email = email, phone = phone, avatarUrl = avatarUrl)
 
 fun SettingsDto.toThemeMode(): ThemeMode = ThemeMode.entries.firstOrNull { it.apiValue == theme } ?: ThemeMode.System
 

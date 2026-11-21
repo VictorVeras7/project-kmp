@@ -134,6 +134,12 @@ data class AddressDto(
     val line: String,
     val cityLine: String,
     val isSelected: Boolean = false,
+    // Campos separados, usados para preencher o formulário de edição.
+    val cep: String = "",
+    val street: String = "",
+    val complement: String? = null,
+    val neighborhood: String = "",
+    val city: String = "",
 )
 
 @Serializable
@@ -145,6 +151,16 @@ data class NewAddressRequest(
     val neighborhood: String,
     val city: String,
     val select: Boolean,
+)
+
+// PATCH /addresses/:id: o formulário de edição envia todos os campos.
+@Serializable
+data class UpdateAddressRequest(
+    val cep: String,
+    val street: String,
+    val complement: String?,
+    val neighborhood: String,
+    val city: String,
 )
 
 @Serializable
@@ -230,7 +246,11 @@ data class ReorderDto(val cart: CartDto, val skippedProductIds: List<String> = e
 // Perfil
 
 @Serializable
-data class ProfileDto(val name: String, val email: String, val phone: String)
+data class ProfileDto(val name: String, val email: String, val phone: String, val avatarUrl: String? = null)
+
+// PATCH /me: nome, e-mail e telefone da tela "Editar perfil".
+@Serializable
+data class UpdateProfileRequest(val name: String, val email: String, val phone: String)
 
 @Serializable
 data class SettingsDto(val theme: String, val notifications: NotificationPrefsDto)

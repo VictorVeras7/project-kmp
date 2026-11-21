@@ -4,12 +4,16 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.HttpRequestBuilder
+import io.ktor.client.request.forms.MultiPartFormDataContent
+import io.ktor.client.request.forms.formData
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.parameter
 import io.ktor.client.request.request
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
+import io.ktor.http.Headers
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
@@ -143,6 +147,32 @@ class RangoApi(private val baseUrl: String = ApiBaseUrl) {
 
     suspend fun me(): ProfileDto = call(HttpMethod.Get, "/me")
 
+    suspend fun updateProfile(request: UpdateProfileRequest): ProfileDto =
+        call(HttpMethod.Patch, "/me") { jsonBody(request) }
+
+    // Foto de perfil: JPEG já recortado pela plataforma, enviado no campo "file".
+    suspend fun uploadAvatar(jpeg: ByteArray): ProfileDto = call(HttpMethod.Put, "/me/avatar") {
+        setBody(
+            MultiPartFormDataContent(
+                formData {
+                    append(
+                        "file",
+                        jpeg,
+                        Headers.build {
+                            append(HttpHeaders.ContentType, "image/jpeg")
+                            append(HttpHeaders.ContentDisposition, "filename=\"avatar.jpg\"")
+                        },
+                    )
+                },
+            ),
+        )
+    }
+
+    suspend fun removeAvatar(): ProfileDto = call(HttpMethod.Delete, "/me/avatar")
+
+    // A foto é um arquivo estático do servidor (avatarUrl é relativo à base da API).
+    suspend fun download(path: String): ByteArray = send(HttpMethod.Get, path, auth = false) {}.body()
+
     suspend fun settings(): SettingsDto = call(HttpMethod.Get, "/me/settings")
 
     // Atualização parcial: envia só o tema ou só as notificações.
@@ -183,6 +213,13 @@ class RangoApi(private val baseUrl: String = ApiBaseUrl) {
 
     suspend fun addAddress(request: NewAddressRequest): AddressDto =
         call(HttpMethod.Post, "/addresses") { jsonBody(request) }
+
+    suspend fun updateAddress(id: Int, request: UpdateAddressRequest): AddressDto =
+        call(HttpMethod.Patch, "/addresses/$id") { jsonBody(request) }
+
+    suspend fun deleteAddress(id: Int) {
+        call<Unit>(HttpMethod.Delete, "/addresses/$id")
+    }
 
     suspend fun selectAddress(id: Int) {
         call<Unit>(HttpMethod.Post, "/addresses/$id/select")
