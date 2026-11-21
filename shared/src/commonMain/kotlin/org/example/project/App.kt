@@ -319,6 +319,8 @@ fun App(onDarkThemeChange: (Boolean) -> Unit = {}) {
                                 selectedIndex = store.addresses.indexOf(store.selectedAddress),
                                 onSelect = store::selectAddress,
                                 onSaveAddress = store::saveAddress,
+                                onUpdateAddress = store::updateAddress,
+                                onDeleteAddress = store::deleteAddress,
                                 onBack = ::goBack,
                             )
                             Screen.Payment -> PaymentScreen(

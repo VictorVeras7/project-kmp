@@ -2,10 +2,12 @@ package org.example.project.ui.checkout
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -15,6 +17,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -50,8 +53,13 @@ fun AddressScreen(
     onSaveAddress: suspend (AddressForm) -> Boolean,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    // Edição e remoção (lápis de cada endereço); também devolvem false se falharem.
+    onUpdateAddress: suspend (id: Int, AddressForm) -> Boolean = { _, _ -> false },
+    onDeleteAddress: suspend (id: Int) -> Boolean = { false },
 ) {
     var showForm by remember { mutableStateOf(false) }
+    // Endereço aberto no formulário de edição (o mesmo formulário do "Novo endereço", já preenchido).
+    var editing by remember { mutableStateOf<DeliveryAddress?>(null) }
 
     CheckoutScaffold(
         title = "Endereço de entrega",
@@ -76,31 +84,66 @@ fun AddressScreen(
                         fontWeight = FontWeight.Medium,
                     )
                 }
-                Icon(
-                    RangoIcons.Edit,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(19.dp),
-                )
+                Box(
+                    modifier = Modifier
+                        .size(34.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .clickable {
+                            editing = if (editing?.id == address.id) null else address
+                            showForm = false
+                        },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        RangoIcons.Edit,
+                        contentDescription = "Editar endereço",
+                        tint = if (editing?.id == address.id) RangoColors.Primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(19.dp),
+                    )
+                }
             }
         }
-        if (showForm) {
+        val current = editing
+        if (current != null) {
+            // key: trocar de endereço recria o formulário com os dados do novo.
+            key(current.id) {
+                NewAddressForm(
+                    initial = current,
+                    onSave = { form ->
+                        if (onUpdateAddress(current.id, form)) editing = null
+                    },
+                    onDelete = {
+                        if (onDeleteAddress(current.id)) editing = null
+                    },
+                )
+            }
+        } else if (showForm) {
             NewAddressForm(
                 onSave = { form ->
                     if (onSaveAddress(form)) showForm = false
                 },
             )
         }
-        AddAddressButton(onClick = { showForm = !showForm })
+        AddAddressButton(
+            onClick = {
+                showForm = !showForm
+                editing = null
+            },
+        )
     }
 }
 
 @Composable
-private fun NewAddressForm(onSave: suspend (AddressForm) -> Unit) {
-    var cep by remember { mutableStateOf("") }
-    var street by remember { mutableStateOf("") }
-    var complement by remember { mutableStateOf("") }
-    var district by remember { mutableStateOf("") }
+private fun NewAddressForm(
+    onSave: suspend (AddressForm) -> Unit,
+    initial: DeliveryAddress? = null,
+    onDelete: (suspend () -> Unit)? = null,
+) {
+    val start = initial?.form
+    var cep by remember { mutableStateOf(start?.cep.orEmpty()) }
+    var street by remember { mutableStateOf(start?.street.orEmpty()) }
+    var complement by remember { mutableStateOf(start?.complement.orEmpty()) }
+    var district by remember { mutableStateOf(start?.let { "${it.neighborhood}, ${it.city}" }.orEmpty()) }
     // Só marca os campos obrigatórios depois de tentar salvar.
     var tried by remember { mutableStateOf(false) }
     var saving by remember { mutableStateOf(false) }
@@ -111,7 +154,7 @@ private fun NewAddressForm(onSave: suspend (AddressForm) -> Unit) {
     val districtError = tried && splitDistrict(district) == null
 
     CheckoutCard(highlighted = true) {
-        Text("Novo endereço", color = MaterialTheme.colorScheme.onSurface, fontSize = 13.5.sp, fontWeight = FontWeight.ExtraBold)
+        Text(if (initial == null) "Novo endereço" else "Editar endereço", color = MaterialTheme.colorScheme.onSurface, fontSize = 13.5.sp, fontWeight = FontWeight.ExtraBold)
         FormField(cep, { cep = it }, "CEP", keyboardType = KeyboardType.Number, error = cepError)
         FormField(street, { street = it }, "Rua e número", error = streetError)
         FormField(complement, { complement = it }, "Complemento")
@@ -151,6 +194,25 @@ private fun NewAddressForm(onSave: suspend (AddressForm) -> Unit) {
             ),
         ) {
             Text(if (saving) "Salvando..." else "Salvar endereço", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+        }
+        if (onDelete != null) {
+            Text(
+                "Excluir endereço",
+                color = RangoColors.Error,
+                fontSize = 13.5.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable(enabled = !saving) {
+                        scope.launch {
+                            saving = true
+                            onDelete()
+                            saving = false
+                        }
+                    }
+                    .padding(6.dp),
+            )
         }
     }
 }
