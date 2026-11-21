@@ -58,6 +58,8 @@ import org.example.project.ui.theme.RangoColors
 import org.example.project.ui.theme.RangoIcons
 import org.example.project.ui.theme.RangoTheme
 
+private val EmailPattern = Regex("^[^@\\s]+@[^@\\s]+\\.[a-z]{2,}$", RegexOption.IGNORE_CASE)
+
 @Composable
 fun EditProfileScreen(
     profile: UserProfile,
@@ -75,10 +77,28 @@ fun EditProfileScreen(
     var errors by remember { mutableStateOf(mapOf<String, String>()) }
     var saving by remember { mutableStateOf(false) }
     var photoSheet by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
+    // Mesmas regras do cadastro; o servidor confere de novo (ex.: e-mail já usado).
+    fun save() {
+        if (saving) return
+        errors = buildMap {
+            if (name.trim().length < 3) put("name", "Informe seu nome completo.")
+            if (!EmailPattern.matches(email.trim())) put("email", "E-mail inválido.")
+            if (phone.count { it.isDigit() } !in 10..11) put("phone", "Telefone incompleto.")
+        }
+        if (errors.isNotEmpty()) return
+        scope.launch {
+            saving = true
+            val result = onSave(name, email, phone)
+            saving = false
+            if (result.isEmpty()) onBack() else errors = result
+        }
+    }
 
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         Column(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
-            EditProfileHeader(onBack = onBack, onSave = {})
+            EditProfileHeader(onBack = onBack, onSave = ::save)
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -130,7 +150,7 @@ fun EditProfileScreen(
             }
             Divider()
             Box(modifier = Modifier.padding(start = 18.dp, end = 18.dp, top = 12.dp, bottom = 20.dp)) {
-                PrimaryButton(if (saving) "Salvando..." else "Salvar alterações", onClick = {}, enabled = !saving)
+                PrimaryButton(if (saving) "Salvando..." else "Salvar alterações", onClick = ::save, enabled = !saving)
             }
         }
     }
