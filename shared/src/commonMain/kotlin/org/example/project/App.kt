@@ -150,13 +150,24 @@ fun App(onDarkThemeChange: (Boolean) -> Unit = {}) {
         }
     }
 
+    // Offline: tenta voltar a falar com o servidor de tempos em tempos (só com o app na tela).
+    LaunchedEffect(store.offline, visible) {
+        while (store.offline && visible) {
+            delay(OfflineRetryMs)
+            store.retryConnection()
+        }
+    }
+
     // Ao abrir as abas, atualiza os pedidos (lista e badge de "Pedidos").
+    // Offline não busca: a faixa já avisa, e cada busca viraria um aviso de erro.
     LaunchedEffect(screen) {
+        if (store.offline) return@LaunchedEffect
         if (screen in TabScreens) store.loadOrders()
         if (screen == Screen.Search) store.loadSearchHome()
         if (screen == Screen.Favorites) store.loadFavorites()
         if (screen == Screen.Profile) store.loadProfile()
         if (screen == Screen.EditProfile && store.profile == null) store.loadProfile()
+        if (screen == Screen.Cart) store.loadCart()
     }
 
     fun openCart(from: Screen) {
@@ -243,7 +254,13 @@ fun App(onDarkThemeChange: (Boolean) -> Unit = {}) {
     RangoTheme(darkTheme = darkTheme) {
         Box(Modifier.fillMaxSize()) {
             Column(Modifier.fillMaxSize()) {
-                Box(Modifier.weight(1f)) {
+                if (store.offline) OfflineBanner()
+                Box(
+                    Modifier
+                        .weight(1f)
+                        // A faixa já ocupa o espaço da barra de status; as telas abaixo não somam de novo.
+                        .then(if (store.offline) Modifier.consumeWindowInsets(WindowInsets.statusBars) else Modifier),
+                ) {
                     stateHolder.SaveableStateProvider(screen.name) {
                         when (screen) {
                             Screen.Splash -> Splash()
@@ -332,7 +349,14 @@ fun App(onDarkThemeChange: (Boolean) -> Unit = {}) {
                                 onOpenProduct = { id -> openProduct(id, Screen.Cart) },
                                 onCouponChange = store::changeCoupon,
                                 onApplyCoupon = store::applyCoupon,
-                                onCheckout = { screen = Screen.Checkout },
+                                onCheckout = {
+                                    // Sem rede o carrinho continua visível, mas o pedido precisa do servidor.
+                                    if (store.offline) {
+                                        store.message = "Você está offline. Conecte-se para finalizar o pedido."
+                                    } else {
+                                        screen = Screen.Checkout
+                                    }
+                                },
                                 onExplore = { screen = Screen.Home },
                                 totals = store.cart.totals,
                                 products = store.products,
